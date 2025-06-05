@@ -1,229 +1,242 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Check, Circle, Plus, Square, MessageCircle, Target, Users, Clock } from "lucide-react";
-import { LanguageSelector } from "@/components/LanguageSelector";
-import { ThemeSelector } from "@/components/ThemeSelector";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TaskManager } from "@/components/TaskManager";
 import { MotivationalQuotes } from "@/components/MotivationalQuotes";
-import { useTasks } from "@/hooks/useTasks";
+import { ChatGPT } from "@/components/ChatGPT";
+import { CheckSquare, Target, Calendar, Clock, MessageCircle, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
-  const { tasks } = useTasks();
   const navigate = useNavigate();
-
   const [stats, setStats] = useState({
-    dailyGoal: { completed: 0, total: 5 },
-    dailyTasks: 0,
-    completed: 0,
-    tasks: 0,
-    goals: 0,
-    meetings: 0,
-    schedules: 0
+    totalTasks: 0,
+    completedTasks: 0,
+    totalGoals: 0,
+    completedGoals: 0,
+    upcomingMeetings: 0,
+    todaySchedules: 0
   });
 
   useEffect(() => {
-    if (tasks) {
-      const completedTasks = tasks.filter(task => task.completed).length;
-      const totalTasks = tasks.length;
-      
-      // Load goals, meetings, and schedules from localStorage
-      const savedGoals = localStorage.getItem("goals");
-      const savedMeetings = localStorage.getItem("meetings");
-      const savedSchedules = localStorage.getItem("schedules");
-      
-      const goals = savedGoals ? JSON.parse(savedGoals) : [];
-      const meetings = savedMeetings ? JSON.parse(savedMeetings) : [];
-      const schedules = savedSchedules ? JSON.parse(savedSchedules) : [];
-      
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      // Fetch tasks stats
+      const { data: tasks } = await supabase.from("tasks").select("completed");
+      const totalTasks = tasks?.length || 0;
+      const completedTasks = tasks?.filter(task => task.completed).length || 0;
+
+      // Fetch goals stats
+      const { data: goals } = await supabase.from("goals").select("completed");
+      const totalGoals = goals?.length || 0;
+      const completedGoals = goals?.filter(goal => goal.completed).length || 0;
+
+      // Fetch upcoming meetings (next 7 days)
+      const now = new Date();
+      const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const { data: meetings } = await supabase
+        .from("meetings")
+        .select("id")
+        .gte("meeting_date", now.toISOString())
+        .lte("meeting_date", nextWeek.toISOString());
+      const upcomingMeetings = meetings?.length || 0;
+
+      // Fetch today's schedules
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+      const { data: schedules } = await supabase
+        .from("schedules")
+        .select("id")
+        .gte("start_time", todayStart.toISOString())
+        .lt("start_time", todayEnd.toISOString());
+      const todaySchedules = schedules?.length || 0;
+
       setStats({
-        dailyGoal: { completed: completedTasks, total: 5 },
-        dailyTasks: totalTasks,
-        completed: completedTasks,
-        tasks: totalTasks,
-        goals: goals.length,
-        meetings: meetings.length,
-        schedules: schedules.length
+        totalTasks,
+        completedTasks,
+        totalGoals,
+        completedGoals,
+        upcomingMeetings,
+        todaySchedules
       });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
     }
-  }, [tasks]);
+  };
+
+  const taskCompletionRate = stats.totalTasks > 0 ? Math.round((stats.completedTasks / stats.totalTasks) * 100) : 0;
+  const goalCompletionRate = stats.totalGoals > 0 ? Math.round((stats.completedGoals / stats.totalGoals) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50" dir="rtl">
-      {/* Header */}
-      <header className="flex justify-between items-center p-6">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-semibold text-sm">
-            ש
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-6" dir="rtl">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">
+            מערכת ניהול אישית חכמה
+          </h1>
+          <p className="text-gray-600">
+            נהל את המשימות, היעדים, הפגישות ולוח הזמנים שלך במקום אחד
+          </p>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm">משימות</p>
+                  <p className="text-2xl font-bold">{stats.completedTasks}/{stats.totalTasks}</p>
+                  <p className="text-blue-100 text-xs">{taskCompletionRate}% הושלמו</p>
+                </div>
+                <CheckSquare className="w-8 h-8 text-blue-200" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100 text-sm">יעדים</p>
+                  <p className="text-2xl font-bold">{stats.completedGoals}/{stats.totalGoals}</p>
+                  <p className="text-green-100 text-xs">{goalCompletionRate}% הושגו</p>
+                </div>
+                <Target className="w-8 h-8 text-green-200" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100 text-sm">פגישות השבוע</p>
+                  <p className="text-2xl font-bold">{stats.upcomingMeetings}</p>
+                  <p className="text-purple-100 text-xs">7 ימים הקרובים</p>
+                </div>
+                <Calendar className="w-8 h-8 text-purple-200" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100 text-sm">אירועי היום</p>
+                  <p className="text-2xl font-bold">{stats.todaySchedules}</p>
+                  <p className="text-orange-100 text-xs">בלוח הזמנים</p>
+                </div>
+                <Clock className="w-8 h-8 text-orange-200" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Navigation Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/tasks")}>
+            <CardHeader className="text-center">
+              <CheckSquare className="w-12 h-12 mx-auto text-blue-500 mb-2" />
+              <CardTitle className="text-lg">ניהול משימות</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-gray-600 text-sm">צור, ערוך ועקוב אחר המשימות שלך</p>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/goals")}>
+            <CardHeader className="text-center">
+              <Target className="w-12 h-12 mx-auto text-green-500 mb-2" />
+              <CardTitle className="text-lg">יעדים אישיים</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-gray-600 text-sm">הגדר יעדים ועקוב אחר ההתקדמות</p>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/meetings")}>
+            <CardHeader className="text-center">
+              <Calendar className="w-12 h-12 mx-auto text-purple-500 mb-2" />
+              <CardTitle className="text-lg">פגישות</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-gray-600 text-sm">קבע וארגן את הפגישות שלך</p>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/schedules")}>
+            <CardHeader className="text-center">
+              <Clock className="w-12 h-12 mx-auto text-orange-500 mb-2" />
+              <CardTitle className="text-lg">לוח זמנים</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-gray-600 text-sm">נהל את לוח הזמנים היומי שלך</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Task Manager */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5" />
+                  ניהול משימות מהיר
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TaskManager />
+                <div className="mt-4 text-center">
+                  <Button 
+                    onClick={() => navigate("/tasks")} 
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <BarChart3 className="w-4 h-4 ml-2" />
+                    צפה בכל המשימות
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Motivational Quotes */}
+            <MotivationalQuotes />
           </div>
-          <LanguageSelector />
-        </div>
-        <ThemeSelector />
-      </header>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 space-y-8">
-        {/* Hero Section */}
-        <div className="text-center space-y-6">
-          <div className="mx-auto w-20 h-20 bg-gradient-to-r from-pink-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
-            <div className="flex gap-1">
-              <Calendar className="w-6 h-6 text-white" />
-              <Check className="w-6 h-6 text-white" />
-            </div>
+          {/* Chat GPT */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5" />
+                  עוזר אישי חכם
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChatGPT />
+                <div className="mt-4 text-center">
+                  <Button 
+                    onClick={() => navigate("/chat")} 
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <MessageCircle className="w-4 h-4 ml-2" />
+                    פתח צ'אט מלא
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-
-          <div className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-800">
-              מנהל משימות ופגישות
-            </h1>
-            <p className="text-lg text-gray-600">
-              ארגן את היום שלך בצורה חכמה ויעילה
-            </p>
-          </div>
-        </div>
-
-        {/* Motivational Quotes Component */}
-        <MotivationalQuotes />
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-orange-50 border-orange-200">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Circle className="w-5 h-5 text-orange-500 mr-2" />
-                <span className="text-orange-700 font-medium">יעד היום</span>
-              </div>
-              <p className="text-2xl font-bold text-orange-800">
-                {stats.dailyGoal.completed}/{stats.dailyGoal.total}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-purple-50 border-purple-200">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Calendar className="w-5 h-5 text-purple-500 mr-2" />
-                <span className="text-purple-700 font-medium">מטלות היום</span>
-              </div>
-              <p className="text-2xl font-bold text-purple-800">
-                {stats.dailyTasks}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-green-50 border-green-200">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Check className="w-5 h-5 text-green-500 mr-2" />
-                <span className="text-green-700 font-medium">הושלמו</span>
-              </div>
-              <p className="text-2xl font-bold text-green-800">
-                {stats.completed}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Square className="w-5 h-5 text-blue-500 mr-2" />
-                <span className="text-blue-700 font-medium">משימות</span>
-              </div>
-              <p className="text-2xl font-bold text-blue-800">
-                {stats.tasks}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Additional Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-indigo-50 border-indigo-200">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Target className="w-5 h-5 text-indigo-500 mr-2" />
-                <span className="text-indigo-700 font-medium">יעדים</span>
-              </div>
-              <p className="text-2xl font-bold text-indigo-800">
-                {stats.goals}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-pink-50 border-pink-200">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Users className="w-5 h-5 text-pink-500 mr-2" />
-                <span className="text-pink-700 font-medium">פגישות</span>
-              </div>
-              <p className="text-2xl font-bold text-pink-800">
-                {stats.meetings}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-teal-50 border-teal-200">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Clock className="w-5 h-5 text-teal-500 mr-2" />
-                <span className="text-teal-700 font-medium">לוח זמנים</span>
-              </div>
-              <p className="text-2xl font-bold text-teal-800">
-                {stats.schedules}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Button 
-            onClick={() => navigate("/tasks")}
-            className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-3 h-auto flex flex-col items-center gap-2"
-          >
-            <Square className="w-6 h-6" />
-            משימות
-          </Button>
-          <Button 
-            onClick={() => navigate("/goals")}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 h-auto flex flex-col items-center gap-2"
-          >
-            <Target className="w-6 h-6" />
-            יעדים
-          </Button>
-          <Button 
-            onClick={() => navigate("/meetings")}
-            className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 h-auto flex flex-col items-center gap-2"
-          >
-            <Users className="w-6 h-6" />
-            פגישות
-          </Button>
-          <Button 
-            onClick={() => navigate("/schedules")}
-            className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 h-auto flex flex-col items-center gap-2"
-          >
-            <Clock className="w-6 h-6" />
-            לוח זמנים
-          </Button>
-        </div>
-
-        {/* Quick Add Buttons */}
-        <div className="flex justify-center gap-4">
-          <Button 
-            onClick={() => navigate("/tasks")}
-            className="bg-pink-500 hover:bg-pink-600 text-white px-8 py-3 rounded-full flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            הוסף משימה חדשה
-          </Button>
-          <Button 
-            onClick={() => navigate("/chat")}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full flex items-center gap-2"
-          >
-            <MessageCircle className="w-5 h-5" />
-            צ'אט עם GPT
-          </Button>
         </div>
       </div>
     </div>

@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Edit, Check, X, Calendar, Share2, Clock } from "lucide-react";
+import { Plus, Trash2, Edit, Check, X, Calendar, Share2, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Meeting {
   id: string;
@@ -15,6 +16,7 @@ interface Meeting {
   duration: number;
   location?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export const Meetings = () => {
@@ -23,59 +25,100 @@ export const Meetings = () => {
     title: "", 
     description: "", 
     meeting_date: "", 
-    duration: 60, 
-    location: "" 
+    duration: 60,
+    location: ""
   });
   const [editingMeeting, setEditingMeeting] = useState<string | null>(null);
   const [editData, setEditData] = useState({ 
     title: "", 
     description: "", 
     meeting_date: "", 
-    duration: 60, 
-    location: "" 
+    duration: 60,
+    location: ""
   });
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const savedMeetings = localStorage.getItem("meetings");
-    if (savedMeetings) {
-      setMeetings(JSON.parse(savedMeetings));
-    }
+    fetchMeetings();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("meetings", JSON.stringify(meetings));
-  }, [meetings]);
+  const fetchMeetings = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("meetings")
+        .select("*")
+        .order("meeting_date", { ascending: true });
 
-  const addMeeting = (e: React.FormEvent) => {
+      if (error) throw error;
+      setMeetings(data || []);
+    } catch (error: any) {
+      console.error("Error fetching meetings:", error);
+      toast({
+        title: "שגיאה בטעינת הפגישות",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMeeting.title.trim() || !newMeeting.meeting_date) return;
 
-    const meeting: Meeting = {
-      id: crypto.randomUUID(),
-      title: newMeeting.title,
-      description: newMeeting.description,
-      meeting_date: newMeeting.meeting_date,
-      duration: newMeeting.duration,
-      location: newMeeting.location,
-      created_at: new Date().toISOString(),
-    };
+    try {
+      const { error } = await supabase
+        .from("meetings")
+        .insert({
+          title: newMeeting.title,
+          description: newMeeting.description || null,
+          meeting_date: newMeeting.meeting_date,
+          duration: newMeeting.duration,
+          location: newMeeting.location || null,
+        });
 
-    setMeetings(prev => [meeting, ...prev].sort((a, b) => 
-      new Date(a.meeting_date).getTime() - new Date(b.meeting_date).getTime()
-    ));
-    setNewMeeting({ title: "", description: "", meeting_date: "", duration: 60, location: "" });
-    
-    toast({
-      title: "הפגישה נוצרה בהצלחה",
-    });
+      if (error) throw error;
+
+      setNewMeeting({ title: "", description: "", meeting_date: "", duration: 60, location: "" });
+      fetchMeetings();
+      
+      toast({
+        title: "הפגישה נוצרה בהצלחה",
+      });
+    } catch (error: any) {
+      console.error("Error creating meeting:", error);
+      toast({
+        title: "שגיאה ביצירת הפגישה",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const deleteMeeting = (id: string) => {
-    setMeetings(prev => prev.filter(meeting => meeting.id !== id));
-    toast({
-      title: "הפגישה נמחקה בהצלחה",
-    });
+  const deleteMeeting = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("meetings")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      fetchMeetings();
+      
+      toast({
+        title: "הפגישה נמחקה בהצלחה",
+      });
+    } catch (error: any) {
+      console.error("Error deleting meeting:", error);
+      toast({
+        title: "שגיאה במחיקת הפגישה",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const startEdit = (meeting: Meeting) => {
@@ -83,30 +126,44 @@ export const Meetings = () => {
     setEditData({ 
       title: meeting.title, 
       description: meeting.description || "", 
-      meeting_date: meeting.meeting_date,
+      meeting_date: meeting.meeting_date.slice(0, 16),
       duration: meeting.duration,
       location: meeting.location || ""
     });
   };
 
-  const saveEdit = (id: string) => {
+  const saveEdit = async (id: string) => {
     if (!editData.title.trim() || !editData.meeting_date) return;
 
-    setMeetings(prev => 
-      prev.map(meeting => 
-        meeting.id === id 
-          ? { ...meeting, ...editData }
-          : meeting
-      ).sort((a, b) => 
-        new Date(a.meeting_date).getTime() - new Date(b.meeting_date).getTime()
-      )
-    );
-    
-    setEditingMeeting(null);
-    setEditData({ title: "", description: "", meeting_date: "", duration: 60, location: "" });
-    toast({
-      title: "הפגישה עודכנה בהצלחה",
-    });
+    try {
+      const { error } = await supabase
+        .from("meetings")
+        .update({
+          title: editData.title,
+          description: editData.description || null,
+          meeting_date: editData.meeting_date,
+          duration: editData.duration,
+          location: editData.location || null,
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setEditingMeeting(null);
+      setEditData({ title: "", description: "", meeting_date: "", duration: 60, location: "" });
+      fetchMeetings();
+      
+      toast({
+        title: "הפגישה עודכנה בהצלחה",
+      });
+    } catch (error: any) {
+      console.error("Error updating meeting:", error);
+      toast({
+        title: "שגיאה בעדכון הפגישה",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const cancelEdit = () => {
@@ -115,21 +172,20 @@ export const Meetings = () => {
   };
 
   const shareMeeting = (meeting: Meeting) => {
-    const meetingDate = new Date(meeting.meeting_date);
-    const text = `פגישה: ${meeting.title}\nתאריך: ${meetingDate.toLocaleDateString('he-IL')} בשעה ${meetingDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}\nמשך: ${meeting.duration} דקות${meeting.location ? `\nמיקום: ${meeting.location}` : ''}${meeting.description ? `\nפרטים: ${meeting.description}` : ''}`;
+    const meetingDateTime = new Date(meeting.meeting_date);
+    const text = `פגישה: ${meeting.title}\nתאריך: ${meetingDateTime.toLocaleDateString('he-IL')}\nשעה: ${meetingDateTime.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}\nמשך: ${meeting.duration} דקות${meeting.location ? `\nמיקום: ${meeting.location}` : ''}${meeting.description ? `\nתיאור: ${meeting.description}` : ''}`;
     
-    // WhatsApp sharing
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
   };
 
-  const formatDateTime = (dateTime: string) => {
-    const date = new Date(dateTime);
-    return {
-      date: date.toLocaleDateString('he-IL'),
-      time: date.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
-    };
-  };
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64" dir="rtl">
+        <div className="text-gray-500">טוען פגישות...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -155,28 +211,27 @@ export const Meetings = () => {
             />
             <Input
               type="datetime-local"
+              placeholder="תאריך ושעת הפגישה"
               value={newMeeting.meeting_date}
               onChange={(e) => setNewMeeting(prev => ({ ...prev, meeting_date: e.target.value }))}
               required
             />
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                type="number"
-                placeholder="משך בדקות"
-                value={newMeeting.duration}
-                onChange={(e) => setNewMeeting(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
-                min="15"
-                step="15"
-              />
-              <Input
-                placeholder="מיקום (אופציונלי)"
-                value={newMeeting.location}
-                onChange={(e) => setNewMeeting(prev => ({ ...prev, location: e.target.value }))}
-              />
-            </div>
+            <Input
+              type="number"
+              placeholder="משך בדקות"
+              value={newMeeting.duration}
+              onChange={(e) => setNewMeeting(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
+              min="15"
+              max="480"
+            />
+            <Input
+              placeholder="מיקום (אופציונלי)"
+              value={newMeeting.location}
+              onChange={(e) => setNewMeeting(prev => ({ ...prev, location: e.target.value }))}
+            />
             <Button 
               type="submit"
-              className="w-full bg-purple-500 hover:bg-purple-600"
+              className="w-full bg-green-500 hover:bg-green-600"
             >
               קבע פגישה
             </Button>
@@ -193,103 +248,99 @@ export const Meetings = () => {
           </Card>
         )}
         
-        {meetings.map((meeting) => {
-          const { date, time } = formatDateTime(meeting.meeting_date);
-          const isUpcoming = new Date(meeting.meeting_date) > new Date();
-          
-          return (
-            <Card key={meeting.id} className={isUpcoming ? "border-purple-200 bg-purple-50" : "bg-gray-50"}>
-              <CardContent className="p-4">
-                {editingMeeting === meeting.id ? (
-                  <form onSubmit={(e) => { e.preventDefault(); saveEdit(meeting.id); }} className="space-y-3">
-                    <Input
-                      value={editData.title}
-                      onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-                      required
-                    />
-                    <Textarea
-                      value={editData.description}
-                      onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
-                    />
-                    <Input
-                      type="datetime-local"
-                      value={editData.meeting_date}
-                      onChange={(e) => setEditData(prev => ({ ...prev, meeting_date: e.target.value }))}
-                      required
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <Input
-                        type="number"
-                        value={editData.duration}
-                        onChange={(e) => setEditData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
-                        min="15"
-                        step="15"
-                      />
-                      <Input
-                        value={editData.location}
-                        onChange={(e) => setEditData(prev => ({ ...prev, location: e.target.value }))}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button type="submit" size="sm">
-                        <Check className="w-4 h-4" />
-                      </Button>
-                      <Button type="button" size="sm" variant="outline" onClick={cancelEdit}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-medium text-lg">{meeting.title}</h3>
-                      {meeting.description && (
-                        <p className="text-gray-600 text-sm mt-1">{meeting.description}</p>
+        {meetings.map((meeting) => (
+          <Card key={meeting.id}>
+            <CardContent className="p-4">
+              {editingMeeting === meeting.id ? (
+                <form onSubmit={(e) => { e.preventDefault(); saveEdit(meeting.id); }} className="space-y-3">
+                  <Input
+                    value={editData.title}
+                    onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                    required
+                  />
+                  <Textarea
+                    value={editData.description}
+                    onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                  <Input
+                    type="datetime-local"
+                    value={editData.meeting_date}
+                    onChange={(e) => setEditData(prev => ({ ...prev, meeting_date: e.target.value }))}
+                    required
+                  />
+                  <Input
+                    type="number"
+                    value={editData.duration}
+                    onChange={(e) => setEditData(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
+                    min="15"
+                    max="480"
+                  />
+                  <Input
+                    value={editData.location}
+                    onChange={(e) => setEditData(prev => ({ ...prev, location: e.target.value }))}
+                  />
+                  <div className="flex gap-2">
+                    <Button type="submit" size="sm">
+                      <Check className="w-4 h-4" />
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" onClick={cancelEdit}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-medium text-lg">{meeting.title}</h3>
+                    {meeting.description && (
+                      <p className="text-gray-600 text-sm mt-1">{meeting.description}</p>
+                    )}
+                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(meeting.meeting_date).toLocaleDateString('he-IL')}
+                      </span>
+                      <span>
+                        {new Date(meeting.meeting_date).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <span>{meeting.duration} דקות</span>
+                      {meeting.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          {meeting.location}
+                        </span>
                       )}
-                      <div className="flex items-center gap-4 mt-2 text-sm">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {date} בשעה {time}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {meeting.duration} דקות
-                        </span>
-                        {meeting.location && (
-                          <span className="text-blue-600">{meeting.location}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => shareMeeting(meeting)}
-                        title="שתף ב-WhatsApp"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => startEdit(meeting)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteMeeting(meeting.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => shareMeeting(meeting)}
+                      title="שתף ב-WhatsApp"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => startEdit(meeting)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteMeeting(meeting.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );

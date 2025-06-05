@@ -81,6 +81,36 @@ export type Database = {
         }
         Relationships: []
       }
+      goals: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          description: string | null
+          id: string
+          target_date: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       meetings: {
         Row: {
           created_at: string
@@ -138,6 +168,42 @@ export type Database = {
           id?: string
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      schedules: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          end_time: string
+          id: string
+          priority: number | null
+          start_time: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time: string
+          id?: string
+          priority?: number | null
+          start_time: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string
+          id?: string
+          priority?: number | null
+          start_time?: string
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

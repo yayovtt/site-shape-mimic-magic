@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, Edit, Check, X, Target, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Goal {
   id: string;
@@ -15,6 +16,7 @@ interface Goal {
   target_date?: string;
   completed: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 export const Goals = () => {
@@ -22,53 +24,106 @@ export const Goals = () => {
   const [newGoal, setNewGoal] = useState({ title: "", description: "", target_date: "" });
   const [editingGoal, setEditingGoal] = useState<string | null>(null);
   const [editData, setEditData] = useState({ title: "", description: "", target_date: "" });
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const savedGoals = localStorage.getItem("goals");
-    if (savedGoals) {
-      setGoals(JSON.parse(savedGoals));
-    }
+    fetchGoals();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("goals", JSON.stringify(goals));
-  }, [goals]);
+  const fetchGoals = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("goals")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-  const addGoal = (e: React.FormEvent) => {
+      if (error) throw error;
+      setGoals(data || []);
+    } catch (error: any) {
+      console.error("Error fetching goals:", error);
+      toast({
+        title: "שגיאה בטעינת היעדים",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addGoal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newGoal.title.trim()) return;
 
-    const goal: Goal = {
-      id: crypto.randomUUID(),
-      title: newGoal.title,
-      description: newGoal.description,
-      target_date: newGoal.target_date,
-      completed: false,
-      created_at: new Date().toISOString(),
-    };
+    try {
+      const { error } = await supabase
+        .from("goals")
+        .insert({
+          title: newGoal.title,
+          description: newGoal.description || null,
+          target_date: newGoal.target_date || null,
+        });
 
-    setGoals(prev => [goal, ...prev]);
-    setNewGoal({ title: "", description: "", target_date: "" });
-    
-    toast({
-      title: "היעד נוצר בהצלחה",
-    });
+      if (error) throw error;
+
+      setNewGoal({ title: "", description: "", target_date: "" });
+      fetchGoals();
+      
+      toast({
+        title: "היעד נוצר בהצלחה",
+      });
+    } catch (error: any) {
+      console.error("Error creating goal:", error);
+      toast({
+        title: "שגיאה ביצירת היעד",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const toggleGoal = (id: string) => {
-    setGoals(prev => 
-      prev.map(goal => 
-        goal.id === id ? { ...goal, completed: !goal.completed } : goal
-      )
-    );
+  const toggleGoal = async (id: string, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("goals")
+        .update({ completed: !completed })
+        .eq("id", id);
+
+      if (error) throw error;
+      fetchGoals();
+    } catch (error: any) {
+      console.error("Error updating goal:", error);
+      toast({
+        title: "שגיאה בעדכון היעד",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const deleteGoal = (id: string) => {
-    setGoals(prev => prev.filter(goal => goal.id !== id));
-    toast({
-      title: "היעד נמחק בהצלחה",
-    });
+  const deleteGoal = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("goals")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      fetchGoals();
+      
+      toast({
+        title: "היעד נמחק בהצלחה",
+      });
+    } catch (error: any) {
+      console.error("Error deleting goal:", error);
+      toast({
+        title: "שגיאה במחיקת היעד",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const startEdit = (goal: Goal) => {
@@ -80,22 +135,36 @@ export const Goals = () => {
     });
   };
 
-  const saveEdit = (id: string) => {
+  const saveEdit = async (id: string) => {
     if (!editData.title.trim()) return;
 
-    setGoals(prev => 
-      prev.map(goal => 
-        goal.id === id 
-          ? { ...goal, title: editData.title, description: editData.description, target_date: editData.target_date }
-          : goal
-      )
-    );
-    
-    setEditingGoal(null);
-    setEditData({ title: "", description: "", target_date: "" });
-    toast({
-      title: "היעד עודכן בהצלחה",
-    });
+    try {
+      const { error } = await supabase
+        .from("goals")
+        .update({
+          title: editData.title,
+          description: editData.description || null,
+          target_date: editData.target_date || null,
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setEditingGoal(null);
+      setEditData({ title: "", description: "", target_date: "" });
+      fetchGoals();
+      
+      toast({
+        title: "היעד עודכן בהצלחה",
+      });
+    } catch (error: any) {
+      console.error("Error updating goal:", error);
+      toast({
+        title: "שגיאה בעדכון היעד",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const cancelEdit = () => {
@@ -106,10 +175,17 @@ export const Goals = () => {
   const shareGoal = (goal: Goal) => {
     const text = `יעד שלי: ${goal.title}${goal.description ? `\n${goal.description}` : ''}${goal.target_date ? `\nתאריך יעד: ${new Date(goal.target_date).toLocaleDateString('he-IL')}` : ''}`;
     
-    // WhatsApp sharing
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64" dir="rtl">
+        <div className="text-gray-500">טוען יעדים...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -191,7 +267,7 @@ export const Goals = () => {
                   <div className="flex items-start gap-3 flex-1">
                     <Checkbox
                       checked={goal.completed}
-                      onCheckedChange={() => toggleGoal(goal.id)}
+                      onCheckedChange={() => toggleGoal(goal.id, goal.completed)}
                     />
                     <div className={goal.completed ? "line-through" : ""}>
                       <h3 className="font-medium">{goal.title}</h3>

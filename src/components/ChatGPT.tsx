@@ -25,31 +25,31 @@ export const ChatGPT = () => {
     if (!newMessage.trim() || isLoading) return;
 
     setIsLoading(true);
-
+    const currentMessage = newMessage.trim();
+    
     // יצירת הודעה זמנית עם ID מקומי
     const tempMessage: ChatMessage = {
       id: crypto.randomUUID(),
-      message: newMessage.trim(),
+      message: currentMessage,
       created_at: new Date().toISOString(),
     };
 
     try {
       // הוספת ההודעה לרשימה המקומית
       setMessages(prev => [...prev, tempMessage]);
-      const currentMessage = newMessage.trim();
       setNewMessage("");
 
       // קריאה לשירות OpenAI
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          'Authorization': `Bearer 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`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: 'אתה עוזר חכם ומועיל שעונה בעברית.' },
+            { role: 'system', content: 'אתה עוזר חכם ומועיל שעונה בעברית. אתה עוזר לאנשים בניהול משימות, יעדים, פגישות ולוח זמנים. תן תשובות מועילות ומעשיות.' },
             { role: 'user', content: currentMessage }
           ],
           max_tokens: 1000,
@@ -98,7 +98,7 @@ export const ChatGPT = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot className="w-5 h-5" />
-          צ'אט עם GPT
+          צ'אט עם GPT - עוזר אישי חכם
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0">
@@ -106,7 +106,9 @@ export const ChatGPT = () => {
           <div className="space-y-4">
             {messages.length === 0 && (
               <div className="text-center text-gray-500 mt-8">
-                שלח הודעה כדי להתחיל שיחה עם GPT
+                <Bot className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <p>שלח הודעה כדי להתחיל שיחה עם GPT</p>
+                <p className="text-sm mt-2">אני יכול לעזור לך עם ניהול משימות, יעדים, פגישות ועוד</p>
               </div>
             )}
             {messages.map((message) => (
@@ -131,7 +133,10 @@ export const ChatGPT = () => {
               <div className="flex items-start gap-2">
                 <Bot className="w-5 h-5 mt-1 text-green-500" />
                 <div className="bg-green-50 p-3 rounded-lg flex-1">
-                  <p>GPT חושב...</p>
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
+                    <p>GPT חושב...</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -140,7 +145,7 @@ export const ChatGPT = () => {
         <div className="p-4 border-t">
           <form onSubmit={sendMessage} className="flex gap-2">
             <Input
-              placeholder="כתוב הודעה..."
+              placeholder="כתוב הודעה... (למשל: איך אני יכול לארגן את היום שלי?)"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               disabled={isLoading}
