@@ -1,12 +1,10 @@
 
 import { TaskManager } from "@/components/TaskManager";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Tasks = () => {
-  const { signOut } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -20,9 +18,6 @@ const Tasks = () => {
           >
             <ArrowRight className="w-4 h-4" />
             חזור לדף הבית
-          </Button>
-          <Button variant="outline" onClick={signOut}>
-            התנתק
           </Button>
         </div>
         <TaskManager />

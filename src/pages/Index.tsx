@@ -5,12 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Check, Circle, Plus, Square, RefreshCw, MessageCircle } from "lucide-react";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { ThemeSelector } from "@/components/ThemeSelector";
-import { useAuth } from "@/contexts/AuthContext";
 import { useTasks } from "@/hooks/useTasks";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const { user, loading, signOut } = useAuth();
   const { tasks } = useTasks();
   const navigate = useNavigate();
 
@@ -35,103 +33,17 @@ const Index = () => {
     }
   }, [tasks]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-pink-500" />
-          <p className="text-gray-600">טוען...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50" dir="rtl">
-        {/* Header */}
-        <header className="flex justify-between items-center p-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-semibold text-sm">
-              ש
-            </div>
-            <LanguageSelector />
-          </div>
-          <ThemeSelector />
-        </header>
-
-        {/* Main Content */}
-        <div className="max-w-4xl mx-auto px-6 space-y-8">
-          {/* Hero Section */}
-          <div className="text-center space-y-6">
-            <div className="mx-auto w-20 h-20 bg-gradient-to-r from-pink-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
-              <div className="flex gap-1">
-                <Calendar className="w-6 h-6 text-white" />
-                <Check className="w-6 h-6 text-white" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-800">
-                מנהל משימות ופגישות
-              </h1>
-              <p className="text-lg text-gray-600">
-                ארגן את היום שלך בצורה חכמה ויעילה
-              </p>
-            </div>
-          </div>
-
-          {/* Motivation Card */}
-          <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="w-5 h-5 text-gray-400" />
-                </div>
-                <div className="text-center space-y-2">
-                  <h2 className="text-xl font-semibold text-gray-800">
-                    לעולם אל תוותר! ❤️
-                  </h2>
-                  <p className="text-blue-600 flex items-center justify-center gap-2">
-                    💎 כל אתגר הוא הזדמנות להתקדם
-                  </p>
-                </div>
-                <div></div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
-          <div className="flex justify-center gap-4">
-            <Button 
-              onClick={() => navigate("/auth")}
-              className="bg-pink-500 hover:bg-pink-600 text-white px-8 py-3"
-            >
-              התחבר / הירשם
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50" dir="rtl">
       {/* Header */}
       <header className="flex justify-between items-center p-6">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-semibold text-sm">
             ש
           </div>
           <LanguageSelector />
-          <span className="text-sm text-gray-600">שלום, {user.email}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <ThemeSelector />
-          <Button variant="outline" onClick={signOut}>
-            התנתק
-          </Button>
-        </div>
+        <ThemeSelector />
       </header>
 
       {/* Main Content */}

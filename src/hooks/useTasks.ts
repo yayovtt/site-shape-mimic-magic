@@ -1,7 +1,5 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export interface Task {
@@ -14,98 +12,51 @@ export interface Task {
 }
 
 export const useTasks = () => {
-  const { user } = useAuth();
+  const [tasks, setTasks] = useState<Task[]>([]);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ['tasks', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+  const createTask = {
+    mutate: ({ title, description }: { title: string; description?: string }) => {
+      const task: Task = {
+        id: crypto.randomUUID(),
+        title,
+        description,
+        completed: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user,
-  });
-
-  const createTask = useMutation({
-    mutationFn: async ({ title, description }: { title: string; description?: string }) => {
-      if (!user) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert([
-          {
-            title,
-            description,
-            user_id: user.id,
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setTasks(prev => [task, ...prev]);
       toast({
         title: "המשימה נוצרה בהצלחה",
       });
-    },
-    onError: (error) => {
-      toast({
-        title: "שגיאה ביצירת המשימה",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+    }
+  };
 
-  const updateTask = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Task> & { id: string }) => {
-      const { data, error } = await supabase
-        .from('tasks')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+  const updateTask = {
+    mutate: ({ id, ...updates }: Partial<Task> & { id: string }) => {
+      setTasks(prev => 
+        prev.map(task => 
+          task.id === id 
+            ? { ...task, ...updates, updated_at: new Date().toISOString() }
+            : task
+        )
+      );
+    }
+  };
 
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    },
-  });
-
-  const deleteTask = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  const deleteTask = {
+    mutate: (id: string) => {
+      setTasks(prev => prev.filter(task => task.id !== id));
       toast({
         title: "המשימה נמחקה בהצלחה",
       });
-    },
-  });
+    }
+  };
 
   return {
     tasks,
-    isLoading,
+    isLoading: false,
     createTask,
     updateTask,
     deleteTask,

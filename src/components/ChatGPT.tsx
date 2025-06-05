@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Bot, User } from "lucide-react";
@@ -20,32 +19,24 @@ export const ChatGPT = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
   const { toast } = useToast();
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim()) return;
 
     setIsLoading(true);
 
     try {
-      // שמירת ההודעה במסד הנתונים
-      const { data: savedMessage, error: saveError } = await supabase
-        .from('chat_messages')
-        .insert([
-          {
-            message: newMessage,
-            user_id: user.id,
-          },
-        ])
-        .select()
-        .single();
-
-      if (saveError) throw saveError;
+      // יצירת הודעה זמנית עם ID מקומי
+      const tempMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        message: newMessage,
+        created_at: new Date().toISOString(),
+      };
 
       // הוספת ההודעה לרשימה המקומית
-      setMessages(prev => [...prev, savedMessage]);
+      setMessages(prev => [...prev, tempMessage]);
 
       // קריאה ל-Edge Function לקבלת תגובת GPT
       const { data, error } = await supabase.functions.invoke('chat-gpt', {
@@ -55,17 +46,9 @@ export const ChatGPT = () => {
       if (error) throw error;
 
       // עדכון ההודעה עם התגובה
-      const { error: updateError } = await supabase
-        .from('chat_messages')
-        .update({ response: data.response })
-        .eq('id', savedMessage.id);
-
-      if (updateError) throw updateError;
-
-      // עדכון הרשימה המקומית
       setMessages(prev => 
         prev.map(msg => 
-          msg.id === savedMessage.id 
+          msg.id === tempMessage.id 
             ? { ...msg, response: data.response }
             : msg
         )
