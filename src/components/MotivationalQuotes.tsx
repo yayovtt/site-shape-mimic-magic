@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RefreshCw, Plus, Trash2, Heart } from "lucide-react";
+import { RefreshCw, Settings, Heart, Plus, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const defaultQuotes = [
   "לעולם אל תוותר! ❤️",
@@ -21,7 +22,7 @@ export const MotivationalQuotes = () => {
   const [quotes, setQuotes] = useState<string[]>([]);
   const [currentQuote, setCurrentQuote] = useState("");
   const [newQuote, setNewQuote] = useState("");
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,7 +50,6 @@ export const MotivationalQuotes = () => {
     const updatedQuotes = [...quotes, newQuote.trim()];
     saveQuotes(updatedQuotes);
     setNewQuote("");
-    setShowAddForm(false);
     
     toast({
       title: "משפט עידוד חדש נוסף!",
@@ -79,6 +79,7 @@ export const MotivationalQuotes = () => {
   const resetToDefault = () => {
     saveQuotes(defaultQuotes);
     setCurrentQuote(defaultQuotes[Math.floor(Math.random() * defaultQuotes.length)]);
+    setIsSettingsOpen(false);
     toast({
       title: "חזרה למשפטי ברירת המחדל",
     });
@@ -108,75 +109,74 @@ export const MotivationalQuotes = () => {
                 תמשיך ללכת קדימה!
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              הוסף
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* טופס הוספת משפט חדש */}
-      {showAddForm && (
-        <Card>
-          <CardContent className="p-4">
-            <form onSubmit={addQuote} className="space-y-3">
-              <Input
-                placeholder="הכנס משפט עידוד חדש..."
-                value={newQuote}
-                onChange={(e) => setNewQuote(e.target.value)}
-                required
-              />
-              <div className="flex gap-2">
-                <Button type="submit" size="sm" className="bg-green-500 hover:bg-green-600">
-                  הוסף משפט
-                </Button>
-                <Button 
-                  type="button" 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => setShowAddForm(false)}
-                >
-                  ביטול
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* רשימת כל המשפטים */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold">משפטי עידוד ({quotes.length})</h3>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={resetToDefault}
-            >
-              איפוס לברירת מחדל
-            </Button>
-          </div>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {quotes.map((quote, index) => (
-              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <span className="text-sm">{quote}</span>
+            <Popover open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+              <PopoverTrigger asChild>
                 <Button
-                  size="sm"
                   variant="ghost"
-                  onClick={() => deleteQuote(index)}
-                  className="text-red-500 hover:text-red-700"
+                  size="sm"
+                  className="flex items-center gap-2"
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <Settings className="w-4 h-4" />
                 </Button>
-              </div>
-            ))}
+              </PopoverTrigger>
+              <PopoverContent className="w-80" dir="rtl">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">ניהול משפטי עידוד</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsSettingsOpen(false)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  {/* טופס הוספת משפט חדש */}
+                  <form onSubmit={addQuote} className="space-y-3">
+                    <Input
+                      placeholder="הכנס משפט עידוד חדש..."
+                      value={newQuote}
+                      onChange={(e) => setNewQuote(e.target.value)}
+                      required
+                    />
+                    <Button type="submit" size="sm" className="w-full bg-green-500 hover:bg-green-600">
+                      <Plus className="w-4 h-4 ml-1" />
+                      הוסף משפט
+                    </Button>
+                  </form>
+
+                  {/* רשימת משפטים */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">משפטים ({quotes.length})</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={resetToDefault}
+                      >
+                        איפוס
+                      </Button>
+                    </div>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {quotes.map((quote, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                          <span className="flex-1 truncate">{quote}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteQuote(index)}
+                            className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </CardContent>
       </Card>

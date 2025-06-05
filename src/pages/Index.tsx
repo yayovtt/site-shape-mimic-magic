@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Check, Circle, Plus, Square, MessageCircle } from "lucide-react";
+import { Calendar, Check, Circle, Plus, Square, MessageCircle, Target, Users, Clock } from "lucide-react";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { ThemeSelector } from "@/components/ThemeSelector";
 import { MotivationalQuotes } from "@/components/MotivationalQuotes";
@@ -17,7 +17,10 @@ const Index = () => {
     dailyGoal: { completed: 0, total: 5 },
     dailyTasks: 0,
     completed: 0,
-    tasks: 0
+    tasks: 0,
+    goals: 0,
+    meetings: 0,
+    schedules: 0
   });
 
   useEffect(() => {
@@ -25,11 +28,23 @@ const Index = () => {
       const completedTasks = tasks.filter(task => task.completed).length;
       const totalTasks = tasks.length;
       
+      // Load goals, meetings, and schedules from localStorage
+      const savedGoals = localStorage.getItem("goals");
+      const savedMeetings = localStorage.getItem("meetings");
+      const savedSchedules = localStorage.getItem("schedules");
+      
+      const goals = savedGoals ? JSON.parse(savedGoals) : [];
+      const meetings = savedMeetings ? JSON.parse(savedMeetings) : [];
+      const schedules = savedSchedules ? JSON.parse(savedSchedules) : [];
+      
       setStats({
         dailyGoal: { completed: completedTasks, total: 5 },
         dailyTasks: totalTasks,
         completed: completedTasks,
-        tasks: totalTasks
+        tasks: totalTasks,
+        goals: goals.length,
+        meetings: meetings.length,
+        schedules: schedules.length
       });
     }
   }, [tasks]);
@@ -122,31 +137,78 @@ const Index = () => {
           </Card>
         </div>
 
+        {/* Additional Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-indigo-50 border-indigo-200">
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center mb-2">
+                <Target className="w-5 h-5 text-indigo-500 mr-2" />
+                <span className="text-indigo-700 font-medium">יעדים</span>
+              </div>
+              <p className="text-2xl font-bold text-indigo-800">
+                {stats.goals}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-pink-50 border-pink-200">
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center mb-2">
+                <Users className="w-5 h-5 text-pink-500 mr-2" />
+                <span className="text-pink-700 font-medium">פגישות</span>
+              </div>
+              <p className="text-2xl font-bold text-pink-800">
+                {stats.meetings}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-teal-50 border-teal-200">
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center mb-2">
+                <Clock className="w-5 h-5 text-teal-500 mr-2" />
+                <span className="text-teal-700 font-medium">לוח זמנים</span>
+              </div>
+              <p className="text-2xl font-bold text-teal-800">
+                {stats.schedules}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Action Buttons */}
-        <div className="flex justify-center gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Button 
             onClick={() => navigate("/tasks")}
-            variant="outline" 
-            className="px-6 py-3"
+            className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-3 h-auto flex flex-col items-center gap-2"
           >
-            יומנים יומיים
-          </Button>
-          <Button 
-            onClick={() => navigate("/tasks")}
-            variant="outline" 
-            className="px-6 py-3"
-          >
-            טבלאות
-          </Button>
-          <Button 
-            onClick={() => navigate("/tasks")}
-            className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-3"
-          >
+            <Square className="w-6 h-6" />
             משימות
+          </Button>
+          <Button 
+            onClick={() => navigate("/goals")}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 h-auto flex flex-col items-center gap-2"
+          >
+            <Target className="w-6 h-6" />
+            יעדים
+          </Button>
+          <Button 
+            onClick={() => navigate("/meetings")}
+            className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 h-auto flex flex-col items-center gap-2"
+          >
+            <Users className="w-6 h-6" />
+            פגישות
+          </Button>
+          <Button 
+            onClick={() => navigate("/schedules")}
+            className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 h-auto flex flex-col items-center gap-2"
+          >
+            <Clock className="w-6 h-6" />
+            לוח זמנים
           </Button>
         </div>
 
-        {/* Add Task Button */}
+        {/* Quick Add Buttons */}
         <div className="flex justify-center gap-4">
           <Button 
             onClick={() => navigate("/tasks")}
@@ -162,26 +224,6 @@ const Index = () => {
             <MessageCircle className="w-5 h-5" />
             צ'אט עם GPT
           </Button>
-        </div>
-
-        {/* Bottom Navigation */}
-        <div className="grid grid-cols-2 gap-4 pt-8">
-          <Card 
-            className="bg-white/50 backdrop-blur-sm border-0 shadow-md cursor-pointer hover:bg-white/70 transition-colors"
-            onClick={() => navigate("/tasks")}
-          >
-            <CardContent className="p-4 text-center">
-              <h3 className="font-semibold text-gray-800">משימות שבועיות</h3>
-            </CardContent>
-          </Card>
-          <Card 
-            className="bg-white/50 backdrop-blur-sm border-0 shadow-md cursor-pointer hover:bg-white/70 transition-colors"
-            onClick={() => navigate("/tasks")}
-          >
-            <CardContent className="p-4 text-center">
-              <h3 className="font-semibold text-gray-800">משימות יומיות</h3>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

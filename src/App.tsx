@@ -7,6 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Tasks from "./pages/Tasks";
 import Chat from "./pages/Chat";
+import Goals from "./pages/Goals";
+import Meetings from "./pages/Meetings";
+import Schedules from "./pages/Schedules";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +24,9 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/chat" element={<Chat />} />
+          <Route path="/goals" element={<Goals />} />
+          <Route path="/meetings" element={<Meetings />} />
+          <Route path="/schedules" element={<Schedules />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
