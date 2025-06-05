@@ -23,7 +23,8 @@ export const TaskManager = () => {
   const [editData, setEditData] = useState({ title: "", description: "" });
   const { toast } = useToast();
 
-  const addTask = () => {
+  const addTask = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!newTask.title.trim()) return;
 
     const task: Task = {
@@ -75,6 +76,9 @@ export const TaskManager = () => {
     
     setEditingTask(null);
     setEditData({ title: "", description: "" });
+    toast({
+      title: "המשימה עודכנה בהצלחה",
+    });
   };
 
   const cancelEdit = () => {
@@ -92,22 +96,25 @@ export const TaskManager = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Input
-            placeholder="כותרת המשימה"
-            value={newTask.title}
-            onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
-          />
-          <Textarea
-            placeholder="תיאור המשימה (אופציונלי)"
-            value={newTask.description}
-            onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
-          />
-          <Button 
-            onClick={addTask}
-            className="w-full bg-pink-500 hover:bg-pink-600"
-          >
-            הוסף משימה
-          </Button>
+          <form onSubmit={addTask} className="space-y-4">
+            <Input
+              placeholder="כותרת המשימה"
+              value={newTask.title}
+              onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
+              required
+            />
+            <Textarea
+              placeholder="תיאור המשימה (אופציונלי)"
+              value={newTask.description}
+              onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
+            />
+            <Button 
+              type="submit"
+              className="w-full bg-pink-500 hover:bg-pink-600"
+            >
+              הוסף משימה
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
@@ -124,24 +131,25 @@ export const TaskManager = () => {
           <Card key={task.id} className={task.completed ? "opacity-75" : ""}>
             <CardContent className="p-4">
               {editingTask === task.id ? (
-                <div className="space-y-3">
+                <form onSubmit={(e) => { e.preventDefault(); saveEdit(task.id); }} className="space-y-3">
                   <Input
                     value={editData.title}
                     onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                    required
                   />
                   <Textarea
                     value={editData.description}
                     onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
                   />
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => saveEdit(task.id)}>
+                    <Button type="submit" size="sm">
                       <Check className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="outline" onClick={cancelEdit}>
+                    <Button type="button" size="sm" variant="outline" onClick={cancelEdit}>
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
-                </div>
+                </form>
               ) : (
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">

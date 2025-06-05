@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export interface Task {
@@ -14,6 +14,24 @@ export interface Task {
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const { toast } = useToast();
+
+  // טעינת משימות מ-localStorage בעת טעינת הקומפוננט
+  useEffect(() => {
+    const savedTasks = localStorage.getItem('tasks');
+    if (savedTasks) {
+      try {
+        const parsedTasks = JSON.parse(savedTasks);
+        setTasks(parsedTasks);
+      } catch (error) {
+        console.error('Error loading tasks from localStorage:', error);
+      }
+    }
+  }, []);
+
+  // שמירת משימות ב-localStorage כאשר הן משתנות
+  useEffect(() => {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }, [tasks]);
 
   const createTask = {
     mutate: ({ title, description }: { title: string; description?: string }) => {

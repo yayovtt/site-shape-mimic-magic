@@ -23,7 +23,7 @@ export const ChatGPT = () => {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || isLoading) return;
 
     setIsLoading(true);
 
@@ -31,19 +31,28 @@ export const ChatGPT = () => {
       // יצירת הודעה זמנית עם ID מקומי
       const tempMessage: ChatMessage = {
         id: crypto.randomUUID(),
-        message: newMessage,
+        message: newMessage.trim(),
         created_at: new Date().toISOString(),
       };
 
       // הוספת ההודעה לרשימה המקומית
       setMessages(prev => [...prev, tempMessage]);
+      const currentMessage = newMessage.trim();
+      setNewMessage("");
 
       // קריאה ל-Edge Function לקבלת תגובת GPT
       const { data, error } = await supabase.functions.invoke('chat-gpt', {
-        body: { message: newMessage }
+        body: { message: currentMessage }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'שגיאה בחיבור לשירות GPT');
+      }
+
+      if (!data || !data.response) {
+        throw new Error('לא התקבלה תגובה מהשירות');
+      }
 
       // עדכון ההודעה עם התגובה
       setMessages(prev => 
@@ -54,11 +63,15 @@ export const ChatGPT = () => {
         )
       );
 
-      setNewMessage("");
     } catch (error: any) {
+      console.error('Chat error:', error);
+      
+      // הסרת ההודעה הזמנית במקרה של שגיאה
+      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+      
       toast({
         title: "שגיאה בשליחת ההודעה",
-        description: error.message,
+        description: error.message || 'נסה שוב מאוחר יותר',
         variant: "destructive",
       });
     } finally {
@@ -87,14 +100,14 @@ export const ChatGPT = () => {
                 <div className="flex items-start gap-2">
                   <User className="w-5 h-5 mt-1 text-blue-500" />
                   <div className="bg-blue-50 p-3 rounded-lg flex-1">
-                    <p>{message.message}</p>
+                    <p className="whitespace-pre-wrap">{message.message}</p>
                   </div>
                 </div>
                 {message.response && (
                   <div className="flex items-start gap-2">
                     <Bot className="w-5 h-5 mt-1 text-green-500" />
                     <div className="bg-green-50 p-3 rounded-lg flex-1">
-                      <p>{message.response}</p>
+                      <p className="whitespace-pre-wrap">{message.response}</p>
                     </div>
                   </div>
                 )}
@@ -117,6 +130,7 @@ export const ChatGPT = () => {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               disabled={isLoading}
+              className="flex-1"
             />
             <Button 
               type="submit" 

@@ -2,9 +2,10 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Check, Circle, Plus, Square, RefreshCw, MessageCircle } from "lucide-react";
+import { Calendar, Check, Circle, Plus, Square, MessageCircle } from "lucide-react";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { ThemeSelector } from "@/components/ThemeSelector";
+import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { useTasks } from "@/hooks/useTasks";
 import { useNavigate } from "react-router-dom";
 
@@ -67,25 +68,8 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Motivation Card */}
-        <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <RefreshCw className="w-5 h-5 text-gray-400" />
-              </div>
-              <div className="text-center space-y-2">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  לעולם אל תוותר! ❤️
-                </h2>
-                <p className="text-blue-600 flex items-center justify-center gap-2">
-                  💎 כל אתגר הוא הזדמנות להתקדם
-                </p>
-              </div>
-              <div></div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Motivational Quotes Component */}
+        <MotivationalQuotes />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -140,10 +124,18 @@ const Index = () => {
 
         {/* Action Buttons */}
         <div className="flex justify-center gap-4">
-          <Button variant="outline" className="px-6 py-3">
+          <Button 
+            onClick={() => navigate("/tasks")}
+            variant="outline" 
+            className="px-6 py-3"
+          >
             יומנים יומיים
           </Button>
-          <Button variant="outline" className="px-6 py-3">
+          <Button 
+            onClick={() => navigate("/tasks")}
+            variant="outline" 
+            className="px-6 py-3"
+          >
             טבלאות
           </Button>
           <Button 
