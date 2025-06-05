@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Bot, User } from "lucide-react";
 
@@ -27,30 +26,45 @@ export const ChatGPT = () => {
 
     setIsLoading(true);
 
-    try {
-      // יצירת הודעה זמנית עם ID מקומי
-      const tempMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        message: newMessage.trim(),
-        created_at: new Date().toISOString(),
-      };
+    // יצירת הודעה זמנית עם ID מקומי
+    const tempMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      message: newMessage.trim(),
+      created_at: new Date().toISOString(),
+    };
 
+    try {
       // הוספת ההודעה לרשימה המקומית
       setMessages(prev => [...prev, tempMessage]);
       const currentMessage = newMessage.trim();
       setNewMessage("");
 
-      // קריאה ל-Edge Function לקבלת תגובת GPT
-      const { data, error } = await supabase.functions.invoke('chat-gpt', {
-        body: { message: currentMessage }
+      // קריאה לשירות OpenAI
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'אתה עוזר חכם ומועיל שעונה בעברית.' },
+            { role: 'user', content: currentMessage }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7,
+        }),
       });
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(error.message || 'שגיאה בחיבור לשירות GPT');
+      if (!response.ok) {
+        throw new Error('שגיאה בחיבור לשירות GPT');
       }
 
-      if (!data || !data.response) {
+      const data = await response.json();
+      const gptResponse = data.choices[0]?.message?.content;
+
+      if (!gptResponse) {
         throw new Error('לא התקבלה תגובה מהשירות');
       }
 
@@ -58,7 +72,7 @@ export const ChatGPT = () => {
       setMessages(prev => 
         prev.map(msg => 
           msg.id === tempMessage.id 
-            ? { ...msg, response: data.response }
+            ? { ...msg, response: gptResponse }
             : msg
         )
       );
