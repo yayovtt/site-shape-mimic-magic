@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,9 @@ export const Meetings = () => {
       const [hours, minutes] = selectedTime.split(':');
       meetingDateTime.setHours(parseInt(hours), parseInt(minutes));
 
+      // Generate a random UUID for the user_id (temporary solution)
+      const tempUserId = crypto.randomUUID();
+
       const { error } = await supabase
         .from("meetings")
         .insert({
@@ -75,7 +79,7 @@ export const Meetings = () => {
           description: newMeeting.description,
           meeting_date: meetingDateTime.toISOString(),
           duration: newMeeting.duration,
-          user_id: "temp-user-id" // Temporary until authentication is implemented
+          user_id: tempUserId
         });
 
       if (error) throw error;

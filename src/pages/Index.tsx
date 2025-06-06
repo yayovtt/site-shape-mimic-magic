@@ -5,13 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskManager } from "@/components/TaskManager";
 import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { ThemeSelector } from "@/components/ThemeSelector";
+import { Achievements } from "@/components/Achievements";
 import { 
   CheckSquare, 
   Calendar, 
   Target, 
   MessageSquare, 
   Clock,
-  TrendingUp
+  TrendingUp,
+  Trophy
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,7 +132,7 @@ const Index = () => {
                     {stats.completedTasks}/{stats.totalTasks}
                   </p>
                 </div>
-                <CheckSquare className="h-8 w-8 text-blue-500" />
+                <CheckSquare className="h-10 w-10 text-blue-500" />
               </div>
             </CardContent>
           </Card>
@@ -144,7 +146,7 @@ const Index = () => {
                     {stats.completedGoals}/{stats.totalGoals}
                   </p>
                 </div>
-                <Target className="h-8 w-8 text-green-500" />
+                <Target className="h-10 w-10 text-green-500" />
               </div>
             </CardContent>
           </Card>
@@ -156,7 +158,7 @@ const Index = () => {
                   <p className="text-sm font-medium text-gray-600">פגישות השבוע</p>
                   <p className="text-3xl font-bold text-purple-600">{stats.totalMeetings}</p>
                 </div>
-                <Calendar className="h-8 w-8 text-purple-500" />
+                <Calendar className="h-10 w-10 text-purple-500" />
               </div>
             </CardContent>
           </Card>
@@ -168,7 +170,7 @@ const Index = () => {
                   <p className="text-sm font-medium text-gray-600">אירועים מתוכננים</p>
                   <p className="text-3xl font-bold text-orange-600">{stats.totalSchedules}</p>
                 </div>
-                <Clock className="h-8 w-8 text-orange-500" />
+                <Clock className="h-10 w-10 text-orange-500" />
               </div>
             </CardContent>
           </Card>
@@ -191,8 +193,8 @@ const Index = () => {
                   className="h-auto p-6 flex flex-col items-center gap-3 hover:shadow-lg transition-shadow"
                   onClick={() => navigate(action.route)}
                 >
-                  <div className={`p-3 rounded-full ${action.color} text-white`}>
-                    <action.icon className="w-6 h-6" />
+                  <div className={`p-4 rounded-full ${action.color} text-white`}>
+                    <action.icon className="w-8 h-8" />
                   </div>
                   <div className="text-center">
                     <h3 className="font-semibold">{action.title}</h3>
@@ -219,10 +221,16 @@ const Index = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>מוטיבציה יומית</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="w-5 h-5" />
+                הישגים ומוטיבציה
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <MotivationalQuotes />
+              <div className="space-y-6">
+                <Achievements />
+                <MotivationalQuotes />
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          condition_type: string
+          condition_value: number
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          name: string
+          points: number
+        }
+        Insert: {
+          condition_type: string
+          condition_value: number
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          name: string
+          points?: number
+        }
+        Update: {
+          condition_type?: string
+          condition_value?: number
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          points?: number
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -277,6 +310,35 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
             referencedColumns: ["id"]
           },
         ]
