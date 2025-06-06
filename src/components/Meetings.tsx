@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ interface Meeting {
   meeting_date: string;
   duration: number;
   created_at: string;
+  user_id: string;
 }
 
 export const Meetings = () => {
@@ -25,14 +25,12 @@ export const Meetings = () => {
   const [newMeeting, setNewMeeting] = useState({
     title: "",
     description: "",
-    meeting_date: "",
     duration: 60
   });
   const [editingMeeting, setEditingMeeting] = useState<string | null>(null);
   const [editData, setEditData] = useState({
     title: "",
     description: "",
-    meeting_date: "",
     duration: 60
   });
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -76,13 +74,14 @@ export const Meetings = () => {
           title: newMeeting.title,
           description: newMeeting.description,
           meeting_date: meetingDateTime.toISOString(),
-          duration: newMeeting.duration
+          duration: newMeeting.duration,
+          user_id: "temp-user-id" // Temporary until authentication is implemented
         });
 
       if (error) throw error;
 
       await fetchMeetings();
-      setNewMeeting({ title: "", description: "", meeting_date: "", duration: 60 });
+      setNewMeeting({ title: "", description: "", duration: 60 });
       setSelectedDate(undefined);
       setSelectedTime("09:00");
 
@@ -122,11 +121,9 @@ export const Meetings = () => {
 
   const startEdit = (meeting: Meeting) => {
     setEditingMeeting(meeting.id);
-    const meetingDate = new Date(meeting.meeting_date);
     setEditData({
       title: meeting.title,
       description: meeting.description || "",
-      meeting_date: meeting.meeting_date,
       duration: meeting.duration
     });
   };
@@ -148,7 +145,7 @@ export const Meetings = () => {
 
       await fetchMeetings();
       setEditingMeeting(null);
-      setEditData({ title: "", description: "", meeting_date: "", duration: 60 });
+      setEditData({ title: "", description: "", duration: 60 });
 
       toast({
         title: "הפגישה עודכנה בהצלחה",
@@ -164,7 +161,7 @@ export const Meetings = () => {
 
   const cancelEdit = () => {
     setEditingMeeting(null);
-    setEditData({ title: "", description: "", meeting_date: "", duration: 60 });
+    setEditData({ title: "", description: "", duration: 60 });
   };
 
   const shareViaWhatsApp = (meeting: Meeting) => {
