@@ -123,6 +123,7 @@ export type Database = {
           target_date: string | null
           title: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           completed?: boolean | null
@@ -132,6 +133,7 @@ export type Database = {
           target_date?: string | null
           title: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           completed?: boolean | null
@@ -141,6 +143,7 @@ export type Database = {
           target_date?: string | null
           title?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -191,6 +194,7 @@ export type Database = {
           id: string
           meeting_date: string
           title: string
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -200,6 +204,7 @@ export type Database = {
           id?: string
           meeting_date: string
           title: string
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -209,6 +214,7 @@ export type Database = {
           id?: string
           meeting_date?: string
           title?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

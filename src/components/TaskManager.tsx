@@ -1,12 +1,10 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Edit, Check, X } from "lucide-react";
+import { Plus, Check, Trash2, Edit, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Task {
   id: string;
@@ -14,176 +12,243 @@ interface Task {
   description?: string;
   completed: boolean;
   created_at: string;
+  user_id: string;
 }
 
 export const TaskManager = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [newTask, setNewTask] = useState({ title: "", description: "" });
+  const [newTask, setNewTask] = useState("");
   const [editingTask, setEditingTask] = useState<string | null>(null);
-  const [editData, setEditData] = useState({ title: "", description: "" });
+  const [editTitle, setEditTitle] = useState("");
   const { toast } = useToast();
 
-  const addTask = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      const { data: tasksData, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setTasks(tasksData || []);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      toast({
+        title: "שגיאה בטעינת משימות",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTask.title.trim()) return;
+    if (!newTask.trim()) return;
 
-    const task: Task = {
-      id: crypto.randomUUID(),
-      title: newTask.title,
-      description: newTask.description,
-      completed: false,
-      created_at: new Date().toISOString(),
-    };
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .insert({
+          title: newTask,
+          completed: false,
+          user_id: 'demo-user-id'
+        });
 
-    setTasks(prev => [task, ...prev]);
-    setNewTask({ title: "", description: "" });
-    
-    toast({
-      title: "המשימה נוצרה בהצלחה",
-    });
+      if (error) throw error;
+
+      await fetchTasks();
+      setNewTask("");
+
+      toast({
+        title: "המשימה נוצרה בהצלחה",
+      });
+    } catch (error) {
+      console.error("Error adding task:", error);
+      toast({
+        title: "שגיאה ביצירת משימה",
+        variant: "destructive",
+      });
+    }
   };
 
-  const toggleTask = (id: string) => {
-    setTasks(prev => 
-      prev.map(task => 
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
+  const toggleTask = async (id: string, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ completed: !completed })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      await fetchTasks();
+      toast({
+        title: completed ? "המשימה סומנה כלא הושלמה" : "כל הכבוד! המשימה הושלמה",
+      });
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast({
+        title: "שגיאה בעדכון משימה",
+        variant: "destructive",
+      });
+    }
   };
 
-  const deleteTask = (id: string) => {
-    setTasks(prev => prev.filter(task => task.id !== id));
-    toast({
-      title: "המשימה נמחקה בהצלחה",
-    });
+  const deleteTask = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      await fetchTasks();
+      toast({
+        title: "המשימה נמחקה בהצלחה",
+      });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast({
+        title: "שגיאה במחיקת משימה",
+        variant: "destructive",
+      });
+    }
   };
 
   const startEdit = (task: Task) => {
     setEditingTask(task.id);
-    setEditData({ title: task.title, description: task.description || "" });
+    setEditTitle(task.title);
   };
 
-  const saveEdit = (id: string) => {
-    if (!editData.title.trim()) return;
+  const saveEdit = async (id: string) => {
+    if (!editTitle.trim()) return;
 
-    setTasks(prev => 
-      prev.map(task => 
-        task.id === id 
-          ? { ...task, title: editData.title, description: editData.description }
-          : task
-      )
-    );
-    
-    setEditingTask(null);
-    setEditData({ title: "", description: "" });
-    toast({
-      title: "המשימה עודכנה בהצלחה",
-    });
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ title: editTitle })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      await fetchTasks();
+      setEditingTask(null);
+      setEditTitle("");
+
+      toast({
+        title: "המשימה עודכנה בהצלחה",
+      });
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast({
+        title: "שגיאה בעדכון משימה",
+        variant: "destructive",
+      });
+    }
   };
 
   const cancelEdit = () => {
     setEditingTask(null);
-    setEditData({ title: "", description: "" });
+    setEditTitle("");
   };
 
   return (
-    <div className="space-y-6" dir="rtl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5" />
-            הוסף משימה חדשה
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={addTask} className="space-y-4">
-            <Input
-              placeholder="כותרת המשימה"
-              value={newTask.title}
-              onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
-              required
-            />
-            <Textarea
-              placeholder="תיאור המשימה (אופציונלי)"
-              value={newTask.description}
-              onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
-            />
-            <Button 
-              type="submit"
-              className="w-full bg-pink-500 hover:bg-pink-600"
-            >
-              הוסף משימה
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="space-y-4 text-lg" dir="rtl">
+      <form onSubmit={addTask} className="flex gap-2">
+        <Input
+          placeholder="הוסף משימה חדשה..."
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          className="flex-1 text-lg p-4"
+        />
+        <Button type="submit" disabled={!newTask.trim()} className="text-lg px-6">
+          <Plus className="w-5 h-5" />
+        </Button>
+      </form>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {tasks.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center text-gray-500">
-              אין משימות עדיין. הוסף משימה ראשונה!
-            </CardContent>
-          </Card>
+          <div className="text-center text-gray-500 py-8 text-lg">
+            אין משימות עדיין. הוסף משימה ראשונה!
+          </div>
         )}
         
         {tasks.map((task) => (
-          <Card key={task.id} className={task.completed ? "opacity-75" : ""}>
-            <CardContent className="p-4">
-              {editingTask === task.id ? (
-                <form onSubmit={(e) => { e.preventDefault(); saveEdit(task.id); }} className="space-y-3">
-                  <Input
-                    value={editData.title}
-                    onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-                    required
-                  />
-                  <Textarea
-                    value={editData.description}
-                    onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
-                  />
-                  <div className="flex gap-2">
-                    <Button type="submit" size="sm">
-                      <Check className="w-4 h-4" />
-                    </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={cancelEdit}>
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </form>
-              ) : (
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    <Checkbox
-                      checked={task.completed}
-                      onCheckedChange={() => toggleTask(task.id)}
-                    />
-                    <div className={task.completed ? "line-through" : ""}>
-                      <h3 className="font-medium">{task.title}</h3>
-                      {task.description && (
-                        <p className="text-gray-600 text-sm mt-1">{task.description}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => startEdit(task)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deleteTask(task.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div
+            key={task.id}
+            className={`flex items-center gap-3 p-4 rounded-lg border transition-colors ${
+              task.completed ? "bg-green-50 border-green-200" : "bg-white border-gray-200"
+            }`}
+          >
+            {editingTask === task.id ? (
+              <>
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="flex-1 text-lg"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      saveEdit(task.id);
+                    } else if (e.key === 'Escape') {
+                      cancelEdit();
+                    }
+                  }}
+                />
+                <Button
+                  size="sm"
+                  onClick={() => saveEdit(task.id)}
+                  className="text-lg"
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={cancelEdit}
+                  className="text-lg"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  variant={task.completed ? "default" : "outline"}
+                  onClick={() => toggleTask(task.id, task.completed)}
+                  className={`${task.completed ? "bg-green-500 hover:bg-green-600" : ""} text-lg`}
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+                <span
+                  className={`flex-1 text-lg ${
+                    task.completed ? "line-through text-gray-500" : ""
+                  }`}
+                >
+                  {task.title}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => startEdit(task)}
+                  className="text-lg"
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => deleteTask(task.id)}
+                  className="text-lg hover:bg-red-50 hover:text-red-600"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </>
+            )}
+          </div>
         ))}
       </div>
     </div>

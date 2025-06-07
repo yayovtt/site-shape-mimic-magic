@@ -26,14 +26,12 @@ export const Meetings = () => {
   const [newMeeting, setNewMeeting] = useState({
     title: "",
     description: "",
-    meeting_date: "",
     duration: 60
   });
   const [editingMeeting, setEditingMeeting] = useState<string | null>(null);
   const [editData, setEditData] = useState({
     title: "",
     description: "",
-    meeting_date: "",
     duration: 60
   });
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -78,13 +76,13 @@ export const Meetings = () => {
           description: newMeeting.description,
           meeting_date: meetingDateTime.toISOString(),
           duration: newMeeting.duration,
-          user_id: 'temp-user-id' // Adding user_id temporarily
+          user_id: 'demo-user-id'
         });
 
       if (error) throw error;
 
       await fetchMeetings();
-      setNewMeeting({ title: "", description: "", meeting_date: "", duration: 60 });
+      setNewMeeting({ title: "", description: "", duration: 60 });
       setSelectedDate(undefined);
       setSelectedTime("09:00");
 
@@ -127,7 +125,6 @@ export const Meetings = () => {
     setEditData({
       title: meeting.title,
       description: meeting.description || "",
-      meeting_date: meeting.meeting_date,
       duration: meeting.duration
     });
   };
@@ -149,7 +146,7 @@ export const Meetings = () => {
 
       await fetchMeetings();
       setEditingMeeting(null);
-      setEditData({ title: "", description: "", meeting_date: "", duration: 60 });
+      setEditData({ title: "", description: "", duration: 60 });
 
       toast({
         title: "הפגישה עודכנה בהצלחה",
@@ -165,7 +162,7 @@ export const Meetings = () => {
 
   const cancelEdit = () => {
     setEditingMeeting(null);
-    setEditData({ title: "", description: "", meeting_date: "", duration: 60 });
+    setEditData({ title: "", description: "", duration: 60 });
   };
 
   const shareViaWhatsApp = (meeting: Meeting) => {
@@ -176,11 +173,11 @@ export const Meetings = () => {
   };
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6 text-lg" dir="rtl">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Plus className="w-6 h-6" />
             הוסף פגישה חדשה
           </CardTitle>
         </CardHeader>
@@ -191,18 +188,20 @@ export const Meetings = () => {
               value={newMeeting.title}
               onChange={(e) => setNewMeeting(prev => ({ ...prev, title: e.target.value }))}
               required
+              className="text-lg p-4"
             />
             <Textarea
               placeholder="תיאור הפגישה (אופציונלי)"
               value={newMeeting.description}
               onChange={(e) => setNewMeeting(prev => ({ ...prev, description: e.target.value }))}
+              className="text-lg p-4"
             />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="justify-start text-right">
-                    <CalendarIcon className="ml-2 h-4 w-4" />
+                  <Button variant="outline" className="justify-start text-right text-lg p-4">
+                    <CalendarIcon className="ml-2 h-5 w-5" />
                     {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "בחר תאריך"}
                   </Button>
                 </PopoverTrigger>
@@ -220,6 +219,7 @@ export const Meetings = () => {
                 type="time"
                 value={selectedTime}
                 onChange={(e) => setSelectedTime(e.target.value)}
+                className="text-lg p-4"
               />
             </div>
 
@@ -230,11 +230,12 @@ export const Meetings = () => {
               onChange={(e) => setNewMeeting(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
               min="15"
               max="480"
+              className="text-lg p-4"
             />
 
             <Button 
               type="submit"
-              className="w-full bg-purple-500 hover:bg-purple-600"
+              className="w-full bg-purple-500 hover:bg-purple-600 text-lg p-4"
               disabled={!newMeeting.title.trim() || !selectedDate}
             >
               הוסף פגישה
@@ -246,7 +247,7 @@ export const Meetings = () => {
       <div className="space-y-4">
         {meetings.length === 0 && (
           <Card>
-            <CardContent className="p-8 text-center text-gray-500">
+            <CardContent className="p-8 text-center text-gray-500 text-lg">
               אין פגישות עדיין. הוסף פגישה ראשונה!
             </CardContent>
           </Card>
@@ -254,17 +255,19 @@ export const Meetings = () => {
         
         {meetings.map((meeting) => (
           <Card key={meeting.id}>
-            <CardContent className="p-4">
+            <CardContent className="p-6">
               {editingMeeting === meeting.id ? (
-                <form onSubmit={(e) => { e.preventDefault(); saveEdit(meeting.id); }} className="space-y-3">
+                <form onSubmit={(e) => { e.preventDefault(); saveEdit(meeting.id); }} className="space-y-4">
                   <Input
                     value={editData.title}
                     onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
                     required
+                    className="text-lg p-4"
                   />
                   <Textarea
                     value={editData.description}
                     onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
+                    className="text-lg p-4"
                   />
                   <Input
                     type="number"
@@ -272,49 +275,55 @@ export const Meetings = () => {
                     onChange={(e) => setEditData(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
                     min="15"
                     max="480"
+                    className="text-lg p-4"
                   />
                   <div className="flex gap-2">
-                    <Button type="submit" size="sm">
-                      <Check className="w-4 h-4" />
+                    <Button type="submit" size="lg" className="text-lg">
+                      <Check className="w-5 h-5" />
+                      שמור
                     </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={cancelEdit}>
-                      <X className="w-4 h-4" />
+                    <Button type="button" size="lg" variant="outline" onClick={cancelEdit} className="text-lg">
+                      <X className="w-5 h-5" />
+                      ביטול
                     </Button>
                   </div>
                 </form>
               ) : (
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="font-medium text-lg">{meeting.title}</h3>
-                    <p className="text-gray-600 text-sm">
+                    <h3 className="font-medium text-xl mb-2">{meeting.title}</h3>
+                    <p className="text-gray-600 text-lg mb-1">
                       {format(new Date(meeting.meeting_date), "dd/MM/yyyy HH:mm")} • {meeting.duration} דקות
                     </p>
                     {meeting.description && (
-                      <p className="text-gray-600 text-sm mt-1">{meeting.description}</p>
+                      <p className="text-gray-600 text-lg mt-2">{meeting.description}</p>
                     )}
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      size="sm"
+                      size="lg"
                       variant="ghost"
                       onClick={() => shareViaWhatsApp(meeting)}
                       title="שתף ב-WhatsApp"
+                      className="text-lg"
                     >
-                      <Share2 className="w-4 h-4" />
+                      <Share2 className="w-5 h-5" />
                     </Button>
                     <Button
-                      size="sm"
+                      size="lg"
                       variant="ghost"
                       onClick={() => startEdit(meeting)}
+                      className="text-lg"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-5 h-5" />
                     </Button>
                     <Button
-                      size="sm"
+                      size="lg"
                       variant="ghost"
                       onClick={() => deleteMeeting(meeting.id)}
+                      className="text-lg hover:bg-red-50 hover:text-red-600"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </Button>
                   </div>
                 </div>
