@@ -10,6 +10,7 @@ import Chat from "./pages/Chat";
 import Goals from "./pages/Goals";
 import Meetings from "./pages/Meetings";
 import Schedules from "./pages/Schedules";
+import Achievements from "./pages/Achievements";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/goals" element={<Goals />} />
           <Route path="/meetings" element={<Meetings />} />
           <Route path="/schedules" element={<Schedules />} />
+          <Route path="/achievements" element={<Achievements />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

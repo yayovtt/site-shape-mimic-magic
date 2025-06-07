@@ -26,7 +26,6 @@ export const MotivationalQuotes = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // טעינת משפטים מ-localStorage או שימוש בברירת המחדל
     const savedQuotes = localStorage.getItem("motivational-quotes");
     if (savedQuotes) {
       const parsedQuotes = JSON.parse(savedQuotes);
@@ -60,7 +59,6 @@ export const MotivationalQuotes = () => {
     const updatedQuotes = quotes.filter((_, i) => i !== index);
     saveQuotes(updatedQuotes);
     
-    // אם המשפט הנוכחי נמחק, בחר משפט חדש
     if (updatedQuotes.length > 0 && currentQuote === quotes[index]) {
       setCurrentQuote(updatedQuotes[Math.floor(Math.random() * updatedQuotes.length)]);
     }
@@ -86,35 +84,37 @@ export const MotivationalQuotes = () => {
   };
 
   return (
-    <div className="space-y-4" dir="rtl">
-      {/* משפט עידוד נוכחי */}
-      <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+    <div className="w-full mb-6" dir="rtl">
+      {/* Long rectangle design for motivational quote */}
+      <Card className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
               onClick={getRandomQuote}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 text-white hover:bg-white/10"
             >
               <RefreshCw className="w-4 h-4" />
               משפט חדש
             </Button>
-            <div className="text-center space-y-2 flex-1">
-              <h2 className="text-xl font-semibold text-gray-800">
+            
+            <div className="text-center flex-1 px-4">
+              <h2 className="text-2xl font-bold mb-2">
                 {currentQuote}
               </h2>
-              <p className="text-blue-600 flex items-center justify-center gap-2">
+              <p className="text-blue-100 flex items-center justify-center gap-2">
                 <Heart className="w-4 h-4" />
                 תמשיך ללכת קדימה!
               </p>
             </div>
+            
             <Popover open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-white hover:bg-white/10"
                 >
                   <Settings className="w-4 h-4" />
                 </Button>
@@ -132,7 +132,6 @@ export const MotivationalQuotes = () => {
                     </Button>
                   </div>
                   
-                  {/* טופס הוספת משפט חדש */}
                   <form onSubmit={addQuote} className="space-y-3">
                     <Input
                       placeholder="הכנס משפט עידוד חדש..."
@@ -146,7 +145,6 @@ export const MotivationalQuotes = () => {
                     </Button>
                   </form>
 
-                  {/* רשימת משפטים */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">משפטים ({quotes.length})</span>

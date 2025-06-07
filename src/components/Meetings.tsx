@@ -18,6 +18,7 @@ interface Meeting {
   meeting_date: string;
   duration: number;
   created_at: string;
+  user_id: string;
 }
 
 export const Meetings = () => {
@@ -76,7 +77,8 @@ export const Meetings = () => {
           title: newMeeting.title,
           description: newMeeting.description,
           meeting_date: meetingDateTime.toISOString(),
-          duration: newMeeting.duration
+          duration: newMeeting.duration,
+          user_id: 'temp-user-id' // Adding user_id temporarily
         });
 
       if (error) throw error;
@@ -122,7 +124,6 @@ export const Meetings = () => {
 
   const startEdit = (meeting: Meeting) => {
     setEditingMeeting(meeting.id);
-    const meetingDate = new Date(meeting.meeting_date);
     setEditData({
       title: meeting.title,
       description: meeting.description || "",

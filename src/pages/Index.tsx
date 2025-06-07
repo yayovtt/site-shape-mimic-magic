@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskManager } from "@/components/TaskManager";
 import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { ChatGPT } from "@/components/ChatGPT";
-import { CheckSquare, Target, Calendar, Clock, MessageCircle, BarChart3 } from "lucide-react";
+import { Achievements } from "@/components/Achievements";
+import { CheckSquare, Target, Calendar, Clock, MessageCircle, BarChart3, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -141,7 +141,7 @@ const Index = () => {
         </div>
 
         {/* Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/tasks")}>
             <CardHeader className="text-center">
               <CheckSquare className="w-12 h-12 mx-auto text-blue-500 mb-2" />
@@ -181,7 +181,20 @@ const Index = () => {
               <p className="text-gray-600 text-sm">נהל את לוח הזמנים היומי שלך</p>
             </CardContent>
           </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/achievements")}>
+            <CardHeader className="text-center">
+              <Trophy className="w-12 h-12 mx-auto text-yellow-500 mb-2" />
+              <CardTitle className="text-lg">הישגים</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-gray-600 text-sm">עקוב אחר ההישגים והתגמולים שלך</p>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Motivational Quote - Full Width */}
+        <MotivationalQuotes />
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -209,8 +222,28 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Motivational Quotes */}
-            <MotivationalQuotes />
+            {/* Achievements Preview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5" />
+                  הישגים אחרונים
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Achievements />
+                <div className="mt-4 text-center">
+                  <Button 
+                    onClick={() => navigate("/achievements")} 
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Trophy className="w-4 h-4 ml-2" />
+                    צפה בכל ההישגים
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Chat GPT */}
