@@ -18,7 +18,6 @@ interface Meeting {
   meeting_date: string;
   duration: number;
   created_at: string;
-  user_id: string;
 }
 
 export const Meetings = () => {
@@ -26,12 +25,14 @@ export const Meetings = () => {
   const [newMeeting, setNewMeeting] = useState({
     title: "",
     description: "",
+    meeting_date: "",
     duration: 60
   });
   const [editingMeeting, setEditingMeeting] = useState<string | null>(null);
   const [editData, setEditData] = useState({
     title: "",
     description: "",
+    meeting_date: "",
     duration: 60
   });
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -69,23 +70,19 @@ export const Meetings = () => {
       const [hours, minutes] = selectedTime.split(':');
       meetingDateTime.setHours(parseInt(hours), parseInt(minutes));
 
-      // Generate a random UUID for the user_id (temporary solution)
-      const tempUserId = crypto.randomUUID();
-
       const { error } = await supabase
         .from("meetings")
         .insert({
           title: newMeeting.title,
           description: newMeeting.description,
           meeting_date: meetingDateTime.toISOString(),
-          duration: newMeeting.duration,
-          user_id: tempUserId
+          duration: newMeeting.duration
         });
 
       if (error) throw error;
 
       await fetchMeetings();
-      setNewMeeting({ title: "", description: "", duration: 60 });
+      setNewMeeting({ title: "", description: "", meeting_date: "", duration: 60 });
       setSelectedDate(undefined);
       setSelectedTime("09:00");
 
@@ -125,9 +122,11 @@ export const Meetings = () => {
 
   const startEdit = (meeting: Meeting) => {
     setEditingMeeting(meeting.id);
+    const meetingDate = new Date(meeting.meeting_date);
     setEditData({
       title: meeting.title,
       description: meeting.description || "",
+      meeting_date: meeting.meeting_date,
       duration: meeting.duration
     });
   };
@@ -149,7 +148,7 @@ export const Meetings = () => {
 
       await fetchMeetings();
       setEditingMeeting(null);
-      setEditData({ title: "", description: "", duration: 60 });
+      setEditData({ title: "", description: "", meeting_date: "", duration: 60 });
 
       toast({
         title: "הפגישה עודכנה בהצלחה",
@@ -165,7 +164,7 @@ export const Meetings = () => {
 
   const cancelEdit = () => {
     setEditingMeeting(null);
-    setEditData({ title: "", description: "", duration: 60 });
+    setEditData({ title: "", description: "", meeting_date: "", duration: 60 });
   };
 
   const shareViaWhatsApp = (meeting: Meeting) => {
