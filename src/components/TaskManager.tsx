@@ -54,7 +54,7 @@ export const TaskManager = () => {
         .insert({
           title: newTask,
           completed: false,
-          user_id: 'demo-user-id'
+          user_id: null
         });
 
       if (error) throw error;
@@ -156,22 +156,22 @@ export const TaskManager = () => {
   };
 
   return (
-    <div className="space-y-4 text-lg" dir="rtl">
+    <div className="space-y-4" dir="rtl">
       <form onSubmit={addTask} className="flex gap-2">
         <Input
           placeholder="הוסף משימה חדשה..."
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
-          className="flex-1 text-lg p-4"
+          className="flex-1 text-base"
         />
-        <Button type="submit" disabled={!newTask.trim()} className="text-lg px-6">
-          <Plus className="w-5 h-5" />
+        <Button type="submit" disabled={!newTask.trim()}>
+          <Plus className="w-4 h-4" />
         </Button>
       </form>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {tasks.length === 0 && (
-          <div className="text-center text-gray-500 py-8 text-lg">
+          <div className="text-center text-gray-500 py-8">
             אין משימות עדיין. הוסף משימה ראשונה!
           </div>
         )}
@@ -179,7 +179,7 @@ export const TaskManager = () => {
         {tasks.map((task) => (
           <div
             key={task.id}
-            className={`flex items-center gap-3 p-4 rounded-lg border transition-colors ${
+            className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
               task.completed ? "bg-green-50 border-green-200" : "bg-white border-gray-200"
             }`}
           >
@@ -188,7 +188,7 @@ export const TaskManager = () => {
                 <Input
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="flex-1 text-lg"
+                  className="flex-1 text-base"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       saveEdit(task.id);
@@ -200,7 +200,6 @@ export const TaskManager = () => {
                 <Button
                   size="sm"
                   onClick={() => saveEdit(task.id)}
-                  className="text-lg"
                 >
                   <Check className="w-4 h-4" />
                 </Button>
@@ -208,7 +207,6 @@ export const TaskManager = () => {
                   size="sm"
                   variant="outline"
                   onClick={cancelEdit}
-                  className="text-lg"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -219,12 +217,12 @@ export const TaskManager = () => {
                   size="sm"
                   variant={task.completed ? "default" : "outline"}
                   onClick={() => toggleTask(task.id, task.completed)}
-                  className={`${task.completed ? "bg-green-500 hover:bg-green-600" : ""} text-lg`}
+                  className={task.completed ? "bg-green-500 hover:bg-green-600" : ""}
                 >
                   <Check className="w-4 h-4" />
                 </Button>
                 <span
-                  className={`flex-1 text-lg ${
+                  className={`flex-1 text-base ${
                     task.completed ? "line-through text-gray-500" : ""
                   }`}
                 >
@@ -234,7 +232,6 @@ export const TaskManager = () => {
                   size="sm"
                   variant="ghost"
                   onClick={() => startEdit(task)}
-                  className="text-lg"
                 >
                   <Edit className="w-4 h-4" />
                 </Button>
@@ -242,7 +239,7 @@ export const TaskManager = () => {
                   size="sm"
                   variant="ghost"
                   onClick={() => deleteTask(task.id)}
-                  className="text-lg hover:bg-red-50 hover:text-red-600"
+                  className="hover:bg-red-50 hover:text-red-600"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>

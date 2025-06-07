@@ -44,14 +44,14 @@ export const MotivationalQuotes = () => {
 
   return (
     <Card className="bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg" dir="rtl">
-      <CardContent className="p-8">
+      <CardContent className="p-6">
         <div className="flex items-center gap-4">
-          <Quote className="w-12 h-12 text-blue-200 flex-shrink-0" />
+          <Quote className="w-8 h-8 text-blue-200 flex-shrink-0" />
           <div className="text-center flex-1">
-            <p className="text-2xl font-medium leading-relaxed mb-3">
+            <p className="text-lg font-medium leading-relaxed mb-2">
               {currentQuote.text}
             </p>
-            <p className="text-xl text-blue-100">
+            <p className="text-base text-blue-100">
               — {currentQuote.author}
             </p>
           </div>
