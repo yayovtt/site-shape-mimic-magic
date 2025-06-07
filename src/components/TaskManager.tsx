@@ -53,8 +53,7 @@ export const TaskManager = () => {
         .from("tasks")
         .insert({
           title: newTask,
-          completed: false,
-          user_id: null
+          completed: false
         });
 
       if (error) throw error;
@@ -162,16 +161,16 @@ export const TaskManager = () => {
           placeholder="הוסף משימה חדשה..."
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
-          className="flex-1 text-base"
+          className="flex-1 text-lg"
         />
         <Button type="submit" disabled={!newTask.trim()}>
-          <Plus className="w-4 h-4" />
+          <Plus className="w-5 h-5" />
         </Button>
       </form>
 
       <div className="space-y-2">
         {tasks.length === 0 && (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-gray-500 py-8 text-lg">
             אין משימות עדיין. הוסף משימה ראשונה!
           </div>
         )}
@@ -179,7 +178,7 @@ export const TaskManager = () => {
         {tasks.map((task) => (
           <div
             key={task.id}
-            className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+            className={`flex items-center gap-3 p-4 rounded-lg border transition-colors ${
               task.completed ? "bg-green-50 border-green-200" : "bg-white border-gray-200"
             }`}
           >
@@ -188,7 +187,7 @@ export const TaskManager = () => {
                 <Input
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="flex-1 text-base"
+                  className="flex-1 text-lg"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       saveEdit(task.id);
@@ -201,14 +200,14 @@ export const TaskManager = () => {
                   size="sm"
                   onClick={() => saveEdit(task.id)}
                 >
-                  <Check className="w-4 h-4" />
+                  <Check className="w-5 h-5" />
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={cancelEdit}
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </Button>
               </>
             ) : (
@@ -219,10 +218,10 @@ export const TaskManager = () => {
                   onClick={() => toggleTask(task.id, task.completed)}
                   className={task.completed ? "bg-green-500 hover:bg-green-600" : ""}
                 >
-                  <Check className="w-4 h-4" />
+                  <Check className="w-5 h-5" />
                 </Button>
                 <span
-                  className={`flex-1 text-base ${
+                  className={`flex-1 text-lg ${
                     task.completed ? "line-through text-gray-500" : ""
                   }`}
                 >
@@ -233,7 +232,7 @@ export const TaskManager = () => {
                   variant="ghost"
                   onClick={() => startEdit(task)}
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit className="w-5 h-5" />
                 </Button>
                 <Button
                   size="sm"
@@ -241,7 +240,7 @@ export const TaskManager = () => {
                   onClick={() => deleteTask(task.id)}
                   className="hover:bg-red-50 hover:text-red-600"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-5 h-5" />
                 </Button>
               </>
             )}

@@ -75,8 +75,7 @@ export const Meetings = () => {
           title: newMeeting.title,
           description: newMeeting.description,
           meeting_date: meetingDateTime.toISOString(),
-          duration: newMeeting.duration,
-          user_id: null
+          duration: newMeeting.duration
         });
 
       if (error) throw error;
@@ -176,8 +175,8 @@ export const Meetings = () => {
     <div className="space-y-6" dir="rtl">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Plus className="w-6 h-6" />
             הוסף פגישה חדשה
           </CardTitle>
         </CardHeader>
@@ -188,20 +187,20 @@ export const Meetings = () => {
               value={newMeeting.title}
               onChange={(e) => setNewMeeting(prev => ({ ...prev, title: e.target.value }))}
               required
-              className="text-base"
+              className="text-lg"
             />
             <Textarea
               placeholder="תיאור הפגישה (אופציונלי)"
               value={newMeeting.description}
               onChange={(e) => setNewMeeting(prev => ({ ...prev, description: e.target.value }))}
-              className="text-base"
+              className="text-lg"
             />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="justify-start text-right text-base">
-                    <CalendarIcon className="ml-2 h-4 w-4" />
+                  <Button variant="outline" className="justify-start text-right text-lg">
+                    <CalendarIcon className="ml-2 h-5 w-5" />
                     {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "בחר תאריך"}
                   </Button>
                 </PopoverTrigger>
@@ -219,7 +218,7 @@ export const Meetings = () => {
                 type="time"
                 value={selectedTime}
                 onChange={(e) => setSelectedTime(e.target.value)}
-                className="text-base"
+                className="text-lg"
               />
             </div>
 
@@ -230,12 +229,12 @@ export const Meetings = () => {
               onChange={(e) => setNewMeeting(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
               min="15"
               max="480"
-              className="text-base"
+              className="text-lg"
             />
 
             <Button 
               type="submit"
-              className="w-full bg-purple-500 hover:bg-purple-600"
+              className="w-full bg-purple-500 hover:bg-purple-600 text-lg py-3"
               disabled={!newMeeting.title.trim() || !selectedDate}
             >
               הוסף פגישה
@@ -247,7 +246,7 @@ export const Meetings = () => {
       <div className="space-y-4">
         {meetings.length === 0 && (
           <Card>
-            <CardContent className="p-8 text-center text-gray-500">
+            <CardContent className="p-8 text-center text-gray-500 text-lg">
               אין פגישות עדיין. הוסף פגישה ראשונה!
             </CardContent>
           </Card>
@@ -262,12 +261,12 @@ export const Meetings = () => {
                     value={editData.title}
                     onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
                     required
-                    className="text-base"
+                    className="text-lg"
                   />
                   <Textarea
                     value={editData.description}
                     onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
-                    className="text-base"
+                    className="text-lg"
                   />
                   <Input
                     type="number"
@@ -275,15 +274,15 @@ export const Meetings = () => {
                     onChange={(e) => setEditData(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
                     min="15"
                     max="480"
-                    className="text-base"
+                    className="text-lg"
                   />
                   <div className="flex gap-2">
-                    <Button type="submit">
-                      <Check className="w-4 h-4" />
+                    <Button type="submit" className="text-lg">
+                      <Check className="w-5 h-5" />
                       שמור
                     </Button>
-                    <Button type="button" variant="outline" onClick={cancelEdit}>
-                      <X className="w-4 h-4" />
+                    <Button type="button" variant="outline" onClick={cancelEdit} className="text-lg">
+                      <X className="w-5 h-5" />
                       ביטול
                     </Button>
                   </div>
@@ -291,12 +290,12 @@ export const Meetings = () => {
               ) : (
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="font-medium text-lg mb-2">{meeting.title}</h3>
-                    <p className="text-gray-600 mb-1">
+                    <h3 className="font-medium text-xl mb-2">{meeting.title}</h3>
+                    <p className="text-gray-600 mb-1 text-lg">
                       {format(new Date(meeting.meeting_date), "dd/MM/yyyy HH:mm")} • {meeting.duration} דקות
                     </p>
                     {meeting.description && (
-                      <p className="text-gray-600 mt-2">{meeting.description}</p>
+                      <p className="text-gray-600 mt-2 text-lg">{meeting.description}</p>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -306,14 +305,14 @@ export const Meetings = () => {
                       onClick={() => shareViaWhatsApp(meeting)}
                       title="שתף ב-WhatsApp"
                     >
-                      <Share2 className="w-4 h-4" />
+                      <Share2 className="w-5 h-5" />
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => startEdit(meeting)}
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-5 h-5" />
                     </Button>
                     <Button
                       size="sm"
@@ -321,7 +320,7 @@ export const Meetings = () => {
                       onClick={() => deleteMeeting(meeting.id)}
                       className="hover:bg-red-50 hover:text-red-600"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </Button>
                   </div>
                 </div>

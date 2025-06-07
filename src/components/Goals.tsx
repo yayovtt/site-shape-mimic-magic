@@ -68,8 +68,7 @@ export const Goals = () => {
           title: newGoal.title,
           description: newGoal.description,
           target_date: selectedDate?.toISOString().split('T')[0],
-          completed: false,
-          user_id: null
+          completed: false
         });
 
       if (error) throw error;
@@ -181,8 +180,8 @@ export const Goals = () => {
     <div className="space-y-6" dir="rtl">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Plus className="w-6 h-6" />
             הוסף יעד חדש
           </CardTitle>
         </CardHeader>
@@ -193,19 +192,19 @@ export const Goals = () => {
               value={newGoal.title}
               onChange={(e) => setNewGoal(prev => ({ ...prev, title: e.target.value }))}
               required
-              className="text-base"
+              className="text-lg"
             />
             <Textarea
               placeholder="תיאור היעד (אופציונלי)"
               value={newGoal.description}
               onChange={(e) => setNewGoal(prev => ({ ...prev, description: e.target.value }))}
-              className="text-base"
+              className="text-lg"
             />
             
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start text-right text-base">
-                  <CalendarIcon className="ml-2 h-4 w-4" />
+                <Button variant="outline" className="justify-start text-right text-lg">
+                  <CalendarIcon className="ml-2 h-5 w-5" />
                   {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "תאריך יעד (אופציונלי)"}
                 </Button>
               </PopoverTrigger>
@@ -221,7 +220,7 @@ export const Goals = () => {
 
             <Button 
               type="submit"
-              className="w-full bg-green-500 hover:bg-green-600"
+              className="w-full bg-green-500 hover:bg-green-600 text-lg py-3"
               disabled={!newGoal.title.trim()}
             >
               הוסף יעד
@@ -233,7 +232,7 @@ export const Goals = () => {
       <div className="space-y-4">
         {goals.length === 0 && (
           <Card>
-            <CardContent className="p-8 text-center text-gray-500">
+            <CardContent className="p-8 text-center text-gray-500 text-lg">
               אין יעדים עדיין. הוסף יעד ראשון!
             </CardContent>
           </Card>
@@ -248,20 +247,20 @@ export const Goals = () => {
                     value={editData.title}
                     onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
                     required
-                    className="text-base"
+                    className="text-lg"
                   />
                   <Textarea
                     value={editData.description}
                     onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
-                    className="text-base"
+                    className="text-lg"
                   />
                   <div className="flex gap-2">
-                    <Button type="submit">
-                      <Check className="w-4 h-4" />
+                    <Button type="submit" className="text-lg">
+                      <Check className="w-5 h-5" />
                       שמור
                     </Button>
-                    <Button type="button" variant="outline" onClick={cancelEdit}>
-                      <X className="w-4 h-4" />
+                    <Button type="button" variant="outline" onClick={cancelEdit} className="text-lg">
+                      <X className="w-5 h-5" />
                       ביטול
                     </Button>
                   </div>
@@ -275,19 +274,19 @@ export const Goals = () => {
                       onClick={() => toggleGoal(goal.id, goal.completed)}
                       className={goal.completed ? "bg-green-500 hover:bg-green-600" : ""}
                     >
-                      <Target className="w-4 h-4" />
+                      <Target className="w-5 h-5" />
                     </Button>
                     <div className="flex-1">
-                      <h3 className={`font-medium text-lg mb-2 ${goal.completed ? "line-through text-gray-500" : ""}`}>
+                      <h3 className={`font-medium text-xl mb-2 ${goal.completed ? "line-through text-gray-500" : ""}`}>
                         {goal.title}
                       </h3>
                       {goal.description && (
-                        <p className={`${goal.completed ? "text-gray-400" : "text-gray-600"}`}>
+                        <p className={`text-lg ${goal.completed ? "text-gray-400" : "text-gray-600"}`}>
                           {goal.description}
                         </p>
                       )}
                       {goal.target_date && (
-                        <p className={`mt-1 ${goal.completed ? "text-gray-400" : "text-gray-500"}`}>
+                        <p className={`mt-1 text-lg ${goal.completed ? "text-gray-400" : "text-gray-500"}`}>
                           יעד: {format(new Date(goal.target_date), "dd/MM/yyyy")}
                         </p>
                       )}
@@ -299,7 +298,7 @@ export const Goals = () => {
                       variant="ghost"
                       onClick={() => startEdit(goal)}
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-5 h-5" />
                     </Button>
                     <Button
                       size="sm"
@@ -307,7 +306,7 @@ export const Goals = () => {
                       onClick={() => deleteGoal(goal.id)}
                       className="hover:bg-red-50 hover:text-red-600"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </Button>
                   </div>
                 </div>
