@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,20 +66,22 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
         PROCESSING_CATEGORIES.find(cat => cat.id === id)?.label
       ).filter(Boolean);
 
-      console.log('Sending request with:', {
-        text: originalText.substring(0, 100) + '...',
+      // Build the request body properly - only include customPrompt if it has content
+      const requestBody: any = {
+        text: originalText,
         engine: selectedEngine,
-        categories,
-        customPrompt: customPrompt.trim() || undefined
-      });
+        categories
+      };
+
+      // Only add customPrompt if it's not empty
+      if (customPrompt.trim()) {
+        requestBody.customPrompt = customPrompt.trim();
+      }
+
+      console.log('Sending request with:', requestBody);
 
       const { data, error } = await supabase.functions.invoke('smart-processing', {
-        body: {
-          text: originalText,
-          engine: selectedEngine,
-          categories,
-          customPrompt: customPrompt.trim() || undefined
-        }
+        body: requestBody
       });
 
       console.log('Response received:', { data, error });
