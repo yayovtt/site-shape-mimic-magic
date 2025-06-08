@@ -172,75 +172,75 @@ const Tools = () => {
           <MotivationalQuotes />
         </div>
 
-        {/* Tools List */}
-        <div className="space-y-4 mb-12">
-          {tools.map((tool, index) => (
-            <div key={tool.id}>
-              <Collapsible 
-                open={expandedTool === tool.id} 
-                onOpenChange={() => toggleTool(tool.id)}
-              >
-                <Card className="overflow-hidden">
-                  <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-xl bg-gradient-to-r ${tool.gradient}`}>
-                            <tool.icon className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-xl">{tool.title}</CardTitle>
-                            <p className="text-gray-600">{tool.description}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(tool.path);
-                            }}
-                            className={`bg-gradient-to-r ${tool.gradient} hover:opacity-90`}
-                          >
-                            פתח כלי
-                          </Button>
-                          <ChevronDown className="w-5 h-5 transition-transform duration-200" />
-                        </div>
+        {/* Tools Grid - Horizontal Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {tools.map((tool) => (
+            <Collapsible 
+              key={tool.id}
+              open={expandedTool === tool.id} 
+              onOpenChange={() => toggleTool(tool.id)}
+            >
+              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                    <div className="flex flex-col items-center text-center space-y-4">
+                      <div className={`p-4 rounded-xl bg-gradient-to-r ${tool.gradient}`}>
+                        <tool.icon className="w-8 h-8 text-white" />
                       </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  
-                  <CollapsibleContent>
-                    <CardContent className="pt-0">
-                      {/* Status Cards */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                        <StatusCard
-                          title={tool.title}
-                          icon={tool.icon}
-                          stats={tool.stats}
-                          description={tool.description}
-                        />
+                      <div>
+                        <CardTitle className="text-xl mb-2">{tool.title}</CardTitle>
+                        <p className="text-gray-600 text-sm">{tool.description}</p>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(tool.path);
+                          }}
+                          size="sm"
+                          className={`bg-gradient-to-r ${tool.gradient} hover:opacity-90`}
+                        >
+                          פתח כלי
+                        </Button>
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expandedTool === tool.id ? 'rotate-180' : ''}`} />
+                      </div>
+                    </div>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                
+                <CollapsibleContent>
+                  <CardContent className="pt-0">
+                    {/* Status Summary */}
+                    <div className="grid grid-cols-2 gap-3 mb-6">
+                      {tool.stats.map((stat, index) => (
+                        <div key={index} className="text-center p-3 bg-gray-50 rounded-lg">
+                          <div className={`text-lg font-bold ${stat.color || 'text-purple-600'}`}>
+                            {stat.value}
+                          </div>
+                          <div className="text-xs text-gray-500">{stat.label}</div>
+                        </div>
+                      ))}
+                    </div>
 
-                      {/* Goals Section */}
-                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6">
-                        <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                          <Target className="w-5 h-5 text-purple-600" />
-                          יעדים ומטרות
-                        </h4>
-                        <div className="grid gap-3">
-                          {tool.goals.map((goal, goalIndex) => (
-                            <div key={goalIndex} className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm">
-                              <Star className="w-4 h-4 text-yellow-500" />
-                              <span className="text-gray-700">{goal}</span>
-                            </div>
-                          ))}
-                        </div>
+                    {/* Goals Section */}
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
+                      <h4 className="text-md font-semibold mb-3 flex items-center gap-2">
+                        <Target className="w-4 h-4 text-purple-600" />
+                        יעדים ומטרות
+                      </h4>
+                      <div className="space-y-2">
+                        {tool.goals.map((goal, goalIndex) => (
+                          <div key={goalIndex} className="flex items-center gap-2 p-2 bg-white rounded text-sm">
+                            <Star className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+                            <span className="text-gray-700">{goal}</span>
+                          </div>
+                        ))}
                       </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Card>
-              </Collapsible>
-            </div>
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
           ))}
         </div>
 
