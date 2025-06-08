@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { GradientButton } from "@/components/GradientButton";
 import { StatusCard } from "@/components/StatusCard";
 import { MotivationalQuotes } from "@/components/MotivationalQuotes";
@@ -24,6 +26,7 @@ import {
 const Tools = () => {
   const navigate = useNavigate();
   const [expandedTool, setExpandedTool] = useState<string | null>(null);
+  const [newGoals, setNewGoals] = useState<{ [key: string]: string }>({});
 
   const tools = [
     {
@@ -146,6 +149,14 @@ const Tools = () => {
     setExpandedTool(expandedTool === toolId ? null : toolId);
   };
 
+  const handleAddGoal = (toolId: string) => {
+    const goalText = newGoals[toolId];
+    if (goalText && goalText.trim()) {
+      console.log(`הוספת יעד חדש ל${toolId}: ${goalText}`);
+      setNewGoals({ ...newGoals, [toolId]: '' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50" dir="rtl">
       <div className="container mx-auto px-4 py-8">
@@ -192,16 +203,6 @@ const Tools = () => {
                         <p className="text-gray-600 text-sm">{tool.description}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(tool.path);
-                          }}
-                          size="sm"
-                          className={`bg-gradient-to-r ${tool.gradient} hover:opacity-90`}
-                        >
-                          פתח כלי
-                        </Button>
                         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expandedTool === tool.id ? 'rotate-180' : ''}`} />
                       </div>
                     </div>
@@ -210,31 +211,57 @@ const Tools = () => {
                 
                 <CollapsibleContent>
                   <CardContent className="pt-0">
-                    {/* Status Summary */}
-                    <div className="grid grid-cols-2 gap-3 mb-6">
+                    {/* Status Summary - Rectangle shaped and larger */}
+                    <div className="grid grid-cols-1 gap-4 mb-6">
                       {tool.stats.map((stat, index) => (
-                        <div key={index} className="text-center p-3 bg-gray-50 rounded-lg">
-                          <div className={`text-lg font-bold ${stat.color || 'text-purple-600'}`}>
+                        <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                          <div className="text-right">
+                            <div className="text-sm text-gray-500">{stat.label}</div>
+                          </div>
+                          <div className={`text-xl font-bold ${stat.color || 'text-purple-600'}`}>
                             {stat.value}
                           </div>
-                          <div className="text-xs text-gray-500">{stat.label}</div>
                         </div>
                       ))}
                     </div>
 
                     {/* Goals Section */}
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-4">
                       <h4 className="text-md font-semibold mb-3 flex items-center gap-2">
                         <Target className="w-4 h-4 text-purple-600" />
                         יעדים ומטרות
                       </h4>
                       <div className="space-y-2">
                         {tool.goals.map((goal, goalIndex) => (
-                          <div key={goalIndex} className="flex items-center gap-2 p-2 bg-white rounded text-sm">
+                          <div key={goalIndex} className="flex items-center gap-2 p-3 bg-white rounded text-sm">
                             <Star className="w-3 h-3 text-yellow-500 flex-shrink-0" />
                             <span className="text-gray-700">{goal}</span>
                           </div>
                         ))}
+                      </div>
+                    </div>
+
+                    {/* Add New Goal Section */}
+                    <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4">
+                      <h4 className="text-md font-semibold mb-3 flex items-center gap-2">
+                        <Plus className="w-4 h-4 text-green-600" />
+                        הוסף יעד חדש
+                      </h4>
+                      <div className="space-y-3">
+                        <Textarea
+                          placeholder="הזן יעד או מטרה חדשה..."
+                          value={newGoals[tool.id] || ''}
+                          onChange={(e) => setNewGoals({ ...newGoals, [tool.id]: e.target.value })}
+                          className="resize-none h-20"
+                        />
+                        <Button
+                          onClick={() => handleAddGoal(tool.id)}
+                          size="sm"
+                          className={`w-full bg-gradient-to-r ${tool.gradient} hover:opacity-90`}
+                        >
+                          <Plus className="w-4 h-4 ml-2" />
+                          הוסף יעד
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -254,15 +281,15 @@ const Tools = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-center p-6 bg-green-50 rounded-lg">
                 <div className="text-3xl font-bold text-green-600 mb-2">18</div>
                 <div className="text-green-700">יעדים הושגו השבוע</div>
               </div>
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-center p-6 bg-blue-50 rounded-lg">
                 <div className="text-3xl font-bold text-blue-600 mb-2">25</div>
                 <div className="text-blue-700">יעדים פעילים</div>
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <div className="text-center p-6 bg-purple-50 rounded-lg">
                 <div className="text-3xl font-bold text-purple-600 mb-2">82%</div>
                 <div className="text-purple-700">שיעור הצלחה</div>
               </div>
@@ -279,18 +306,18 @@ const Tools = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4">
-              <div className="p-4 bg-gradient-to-r from-green-100 to-blue-100 rounded-lg">
+            <div className="grid gap-6">
+              <div className="p-6 bg-gradient-to-r from-green-100 to-blue-100 rounded-lg">
                 <p className="text-lg font-medium text-center">
                   "אתה יכול להשיג כל דבר שאתה שם את הדעת עליו! 💪"
                 </p>
               </div>
-              <div className="p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
+              <div className="p-6 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
                 <p className="text-lg font-medium text-center">
                   "כל יום הוא הזדמנות חדשה להצליח! ⭐"
                 </p>
               </div>
-              <div className="p-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg">
+              <div className="p-6 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg">
                 <p className="text-lg font-medium text-center">
                   "התמדה היא המפתח להצלחה! 🏆"
                 </p>
