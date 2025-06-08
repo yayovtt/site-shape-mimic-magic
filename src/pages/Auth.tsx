@@ -28,6 +28,15 @@ const Auth = () => {
       return;
     }
 
+    if (password.length < 6) {
+      toast({
+        title: "שגיאה",
+        description: "הסיסמה חייבת להכיל לפחות 6 תווים",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     console.log("Starting authentication process:", { isLogin, email });
@@ -43,15 +52,22 @@ const Auth = () => {
         console.error("Authentication error:", error);
         
         // Handle specific error messages
-        let errorMessage = error.message;
-        if (error.message.includes("Invalid login credentials")) {
+        let errorMessage = error.message || "שגיאה לא ידועה";
+        
+        if (error.message && error.message.includes("Invalid login credentials")) {
           errorMessage = "פרטי ההתחברות שגויים. אנא בדוק את האימייל והסיסמה";
-        } else if (error.message.includes("User already registered")) {
+        } else if (error.message && error.message.includes("User already registered")) {
           errorMessage = "המשתמש כבר רשום במערכת. נסה להתחבר במקום להירשם";
-        } else if (error.message.includes("Password should be at least")) {
+          // Switch to login mode automatically
+          setIsLogin(true);
+        } else if (error.message && error.message.includes("Password should be at least")) {
           errorMessage = "הסיסמה חייבת להכיל לפחות 6 תווים";
-        } else if (error.message.includes("Unable to validate email address")) {
+        } else if (error.message && error.message.includes("Unable to validate email address")) {
           errorMessage = "כתובת האימייל לא תקינה";
+        } else if (error.message && error.message.includes("Database error")) {
+          errorMessage = "יש בעיה זמנית במערכת. אנא נסה שוב מאוחר יותר";
+        } else if (error.message && error.message.includes("יש בעיה זמנית במערכת")) {
+          errorMessage = error.message;
         }
         
         toast({
@@ -79,6 +95,13 @@ const Auth = () => {
     }
   };
 
+  const switchMode = () => {
+    setIsLogin(!isLogin);
+    setEmail("");
+    setPassword("");
+    // Clear any error states
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center p-6" dir="rtl">
       <Card className="w-full max-w-md">
@@ -96,12 +119,13 @@ const Auth = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="אימייל"
+                placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
                 className="text-right"
+                autoComplete="email"
               />
             </div>
             <div>
@@ -111,13 +135,14 @@ const Auth = () => {
               <Input
                 id="password"
                 type="password"
-                placeholder="סיסמה"
+                placeholder="לפחות 6 תווים"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
                 minLength={6}
                 className="text-right"
+                autoComplete={isLogin ? "current-password" : "new-password"}
               />
             </div>
             <Button
@@ -131,14 +156,11 @@ const Auth = () => {
           <div className="text-center mt-4">
             <Button
               variant="link"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setEmail("");
-                setPassword("");
-              }}
+              onClick={switchMode}
               disabled={loading}
+              className="text-pink-600 hover:text-pink-700"
             >
-              {isLogin ? "אין לך חשבון? הירשם" : "יש לך חשבון? התחבר"}
+              {isLogin ? "אין לך חשבון? הירשם כאן" : "יש לך חשבון? התחבר כאן"}
             </Button>
           </div>
         </CardContent>

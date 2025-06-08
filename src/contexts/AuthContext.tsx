@@ -32,11 +32,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log("AuthProvider: Auth state changed", { event, session: !!session });
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+        
+        if (event === 'SIGNED_OUT' || !session) {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
       }
     );
 
@@ -56,12 +66,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     
     try {
+      // Clear any existing session first
+      await supabase.auth.signOut();
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
       
       console.log("AuthProvider: Sign in result", { error, user: data?.user?.id });
+      
+      if (error) {
+        // Handle specific database errors
+        if (error.message.includes('Database error') || error.status === 500) {
+          return { error: { message: 'יש בעיה זמנית במערכת. אנא נסה להירשם מחדש או צור קשר לתמיכה.' } };
+        }
+      }
+      
       return { error };
     } catch (err) {
       console.error("AuthProvider: Sign in catch error", err);
@@ -76,6 +97,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     
     try {
+      // Clear any existing session first
+      await supabase.auth.signOut();
+      
       const redirectUrl = `${window.location.origin}/`;
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -86,6 +110,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       console.log("AuthProvider: Sign up result", { error, user: data?.user?.id });
+      
+      if (error) {
+        // Handle specific database errors
+        if (error.message.includes('Database error') || error.status === 500) {
+          return { error: { message: 'יש בעיה זמנית במערכת. אנא נסה שוב מאוחר יותר או צור קשר לתמיכה.' } };
+        }
+      }
+      
       return { error };
     } catch (err) {
       console.error("AuthProvider: Sign up catch error", err);
@@ -100,7 +132,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Force clear local state
+      setSession(null);
+      setUser(null);
     } catch (err) {
       console.error("AuthProvider: Sign out error", err);
     } finally {
