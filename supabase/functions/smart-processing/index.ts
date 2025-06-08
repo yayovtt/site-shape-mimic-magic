@@ -90,8 +90,23 @@ serve(async (req) => {
         throw new Error('מפתח Claude API אינו מוגדר כראוי. אנא בדוק שהמפתח תקין ומתחיל ב-sk-ant-');
       }
 
+      console.log('Claude API key found, proceeding with request');
       const systemPrompt = customPrompt || getSystemPrompt(categoryLabels);
       console.log('Using system prompt for Claude');
+
+      const requestBody = {
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 4000,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: text
+          }
+        ]
+      };
+
+      console.log('Sending request to Claude API with model:', requestBody.model);
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -99,36 +114,37 @@ serve(async (req) => {
           'Authorization': `Bearer ${CLAUDE_API_KEY}`,
           'Content-Type': 'application/json',
           'anthropic-version': '2023-06-01',
+          'x-api-key': CLAUDE_API_KEY,
         },
-        body: JSON.stringify({
-          model: 'claude-3-5-haiku-20241022',
-          max_tokens: 4000,
-          system: systemPrompt,
-          messages: [
-            {
-              role: 'user',
-              content: text
-            }
-          ]
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('Claude API response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Claude API error:', errorData);
+        const errorText = await response.text();
+        console.error('Claude API error response:', errorText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: { message: errorText } };
+        }
         
         if (response.status === 401) {
-          throw new Error('מפתח Claude API אינו תקף. אנא בדוק שהמפתח נכון ופעיל.');
+          throw new Error('מפתח Claude API אינו תקף. אנא בדוק שהמפתח נכון ופעיל ומתחיל ב-sk-ant-api03-');
         } else if (response.status === 429) {
           throw new Error('חריגה מהמכסה של Claude API. אנא נסה שוב מאוחר יותר.');
         } else {
-          throw new Error(`שגיאה ב-Claude API: ${response.status} - ${errorData.error?.message || 'שגיאה לא ידועה'}`);
+          throw new Error(`שגיאה ב-Claude API: ${response.status} - ${errorData.error?.message || errorText || 'שגיאה לא ידועה'}`);
         }
       }
 
       const result = await response.json();
-      processedText = result.content[0]?.text || '';
-      console.log('Claude processing completed successfully');
+      console.log('Claude API response received, parsing content...');
+      processedText = result.content?.[0]?.text || '';
+      console.log('Claude processing completed successfully, text length:', processedText.length);
     } else {
       throw new Error('Invalid engine specified. Must be "chatgpt" or "claude"');
     }
