@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,74 +7,157 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { EnhancedMediaUploader } from "./EnhancedMediaUploader";
+import { SmartProcessor } from "./SmartProcessor";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Upload, FileText, Edit3, Save, X, Copy, Download, Clock, Settings } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Mic, Upload, FileText, Edit3, Save, X, Copy, Download, Clock, Settings, Sparkles } from "lucide-react";
 
 interface TranscriptionItem {
   id: string;
-  text: string;
-  source: 'voice' | 'file';
-  timestamp: Date;
+  original_text: string;
+  processed_text?: string;
   filename?: string;
+  file_size_mb?: number;
+  transcription_model?: string;
+  language?: string;
+  processing_engine?: string;
+  processing_category?: string;
+  processing_prompt?: string;
   metadata?: any;
+  created_at: string;
+  updated_at: string;
 }
 
 export const TranscriptionManager = () => {
   const [transcriptions, setTranscriptions] = useState<TranscriptionItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const handleTranscription = (text: string, metadata?: any) => {
-    const source = metadata?.filename ? 'file' : 'voice';
-    const newTranscription: TranscriptionItem = {
-      id: crypto.randomUUID(),
-      text,
-      source,
-      timestamp: new Date(),
-      filename: metadata?.filename,
-      metadata
-    };
+  useEffect(() => {
+    loadTranscriptions();
+  }, []);
 
-    setTranscriptions(prev => [newTranscription, ...prev]);
-    
-    toast({
-      title: "תמלול הושלם!",
-      description: `הטקסט נוסף לרשימת התמלולים${metadata?.chunked ? ' (עובד במקטעים)' : ''}`,
-    });
+  const loadTranscriptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('transcriptions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      setTranscriptions(data || []);
+    } catch (error) {
+      console.error('Error loading transcriptions:', error);
+      toast({
+        title: "שגיאה בטעינת התמלולים",
+        description: "לא ניתן לטעון את ההיסטוריה",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveTranscription = async (text: string, metadata?: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "נדרשת התחברות",
+          description: "עליך להתחבר כדי לשמור תמלולים",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const transcriptionData = {
+        user_id: user.id,
+        original_text: text,
+        filename: metadata?.filename,
+        file_size_mb: metadata?.size,
+        transcription_model: metadata?.model,
+        language: metadata?.language,
+        metadata: metadata
+      };
+
+      const { data, error } = await supabase
+        .from('transcriptions')
+        .insert([transcriptionData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setTranscriptions(prev => [data, ...prev]);
+      
+      toast({
+        title: "תמלול נשמר בהצלחה!",
+        description: "התמלול נוסף להיסטוריה",
+      });
+    } catch (error) {
+      console.error('Error saving transcription:', error);
+      toast({
+        title: "שגיאה בשמירה",
+        description: "לא ניתן לשמור את התמלול",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleVoiceTranscription = (text: string) => {
-    handleTranscription(text);
+    saveTranscription(text, { source: 'voice' });
   };
 
-  const handleFileTranscription = (text: string, filename?: string) => {
-    handleTranscription(text, { filename });
+  const handleFileTranscription = (text: string, metadata?: any) => {
+    saveTranscription(text, { ...metadata, source: 'file' });
   };
 
   const startEdit = (transcription: TranscriptionItem) => {
     setEditingId(transcription.id);
-    setEditText(transcription.text);
+    setEditText(transcription.processed_text || transcription.original_text);
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editingId) return;
     
-    setTranscriptions(prev => 
-      prev.map(item => 
-        item.id === editingId 
-          ? { ...item, text: editText }
-          : item
-      )
-    );
-    
-    setEditingId(null);
-    setEditText("");
-    
-    toast({
-      title: "הטקסט נערך בהצלחה",
-      description: "השינויים נשמרו",
-    });
+    try {
+      const { error } = await supabase
+        .from('transcriptions')
+        .update({ 
+          processed_text: editText,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingId);
+
+      if (error) throw error;
+
+      setTranscriptions(prev => 
+        prev.map(item => 
+          item.id === editingId 
+            ? { ...item, processed_text: editText, updated_at: new Date().toISOString() }
+            : item
+        )
+      );
+      
+      setEditingId(null);
+      setEditText("");
+      
+      toast({
+        title: "הטקסט נערך בהצלחה",
+        description: "השינויים נשמרו",
+      });
+    } catch (error) {
+      console.error('Error updating transcription:', error);
+      toast({
+        title: "שגיאה בעדכון",
+        description: "לא ניתן לשמור את השינויים",
+        variant: "destructive",
+      });
+    }
   };
 
   const cancelEdit = () => {
@@ -106,13 +190,82 @@ export const TranscriptionManager = () => {
     });
   };
 
-  const deleteTranscription = (id: string) => {
-    setTranscriptions(prev => prev.filter(item => item.id !== id));
-    toast({
-      title: "תמלול נמחק",
-      description: "התמלול הוסר מהרשימה",
-    });
+  const deleteTranscription = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('transcriptions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setTranscriptions(prev => prev.filter(item => item.id !== id));
+      toast({
+        title: "תמלול נמחק",
+        description: "התמלול הוסר מההיסטוריה",
+      });
+    } catch (error) {
+      console.error('Error deleting transcription:', error);
+      toast({
+        title: "שגיאה במחיקה",
+        description: "לא ניתן למחוק את התמלול",
+        variant: "destructive",
+      });
+    }
   };
+
+  const handleSmartProcessing = async (transcriptionId: string, processedText: string, options: any) => {
+    try {
+      const { error } = await supabase
+        .from('transcriptions')
+        .update({
+          processed_text: processedText,
+          processing_engine: options.engine,
+          processing_category: options.category,
+          processing_prompt: options.customPrompt,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transcriptionId);
+
+      if (error) throw error;
+
+      setTranscriptions(prev => 
+        prev.map(item => 
+          item.id === transcriptionId 
+            ? { 
+                ...item, 
+                processed_text: processedText,
+                processing_engine: options.engine,
+                processing_category: options.category,
+                processing_prompt: options.customPrompt,
+                updated_at: new Date().toISOString()
+              }
+            : item
+        )
+      );
+
+      toast({
+        title: "עיבוד חכם הושלם!",
+        description: `הטקסט עובד בהצלחה עם ${options.engine === 'chatgpt' ? 'ChatGPT' : 'Claude'}`,
+      });
+    } catch (error) {
+      console.error('Error saving processed text:', error);
+      toast({
+        title: "שגיאה בשמירה",
+        description: "לא ניתן לשמור את הטקסט המעובד",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <span className="mr-2">טוען תמלולים...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -139,9 +292,9 @@ export const TranscriptionManager = () => {
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               <Settings className="w-5 h-5 text-green-600" />
-              <h3 className="font-medium text-green-800">העלאה וטמלול מתקדם</h3>
+              <h3 className="font-medium text-green-800">העלאה ותמלול מתקדם</h3>
             </div>
-            <EnhancedMediaUploader onTranscription={handleTranscription} />
+            <EnhancedMediaUploader onTranscription={handleFileTranscription} />
           </div>
 
           <Separator />
@@ -165,9 +318,9 @@ export const TranscriptionManager = () => {
                   <Card key={transcription.id} className="border border-gray-200">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <Badge variant={transcription.source === 'voice' ? 'default' : 'secondary'}>
-                            {transcription.source === 'voice' ? (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant={transcription.metadata?.source === 'voice' ? 'default' : 'secondary'}>
+                            {transcription.metadata?.source === 'voice' ? (
                               <><Mic className="w-3 h-3 mr-1" /> הקלטה</>
                             ) : (
                               <><Upload className="w-3 h-3 mr-1" /> קובץ</>
@@ -176,16 +329,21 @@ export const TranscriptionManager = () => {
                           {transcription.filename && (
                             <span className="text-xs text-gray-500">{transcription.filename}</span>
                           )}
-                          {transcription.metadata?.chunked && (
+                          {transcription.file_size_mb && (
+                            <span className="text-xs text-gray-400">
+                              {transcription.file_size_mb.toFixed(1)} MB
+                            </span>
+                          )}
+                          {transcription.processing_engine && (
                             <Badge variant="outline" className="text-xs">
-                              <Settings className="w-3 h-3 mr-1" />
-                              מעובד במקטעים
+                              <Sparkles className="w-3 h-3 mr-1" />
+                              {transcription.processing_engine === 'chatgpt' ? 'ChatGPT' : 'Claude'}
                             </Badge>
                           )}
-                          {transcription.metadata?.size && (
-                            <span className="text-xs text-gray-400">
-                              {transcription.metadata.size.toFixed(1)} MB
-                            </span>
+                          {transcription.processing_category && (
+                            <Badge variant="outline" className="text-xs">
+                              {transcription.processing_category}
+                            </Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-1">
@@ -221,7 +379,7 @@ export const TranscriptionManager = () => {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => copyToClipboard(transcription.text)}
+                                onClick={() => copyToClipboard(transcription.processed_text || transcription.original_text)}
                                 className="text-gray-600 hover:text-gray-700"
                               >
                                 <Copy className="w-4 h-4" />
@@ -230,8 +388,8 @@ export const TranscriptionManager = () => {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => downloadText(
-                                  transcription.text, 
-                                  `תמלול_${transcription.timestamp.toLocaleDateString('he-IL')}.txt`
+                                  transcription.processed_text || transcription.original_text, 
+                                  `תמלול_${new Date(transcription.created_at).toLocaleDateString('he-IL')}.txt`
                                 )}
                                 className="text-purple-600 hover:text-purple-700"
                               >
@@ -258,20 +416,43 @@ export const TranscriptionManager = () => {
                           placeholder="ערוך את הטקסט כאן..."
                         />
                       ) : (
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                            {transcription.text}
-                          </p>
+                        <div className="space-y-3">
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <div className="text-xs text-gray-500 mb-2 font-medium">טקסט מקורי:</div>
+                            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                              {transcription.original_text}
+                            </p>
+                          </div>
+                          
+                          {transcription.processed_text && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                              <div className="text-xs text-green-700 mb-2 font-medium flex items-center gap-1">
+                                <Sparkles className="w-3 h-3" />
+                                טקסט מעובד:
+                              </div>
+                              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                                {transcription.processed_text}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {!transcription.processed_text && (
+                            <SmartProcessor
+                              transcriptionId={transcription.id}
+                              originalText={transcription.original_text}
+                              onProcessingComplete={handleSmartProcessing}
+                            />
+                          )}
                         </div>
                       )}
                       
                       <div className="text-xs text-gray-400 mt-2 flex items-center gap-2">
                         <Clock className="w-3 h-3" />
-                        {transcription.timestamp.toLocaleString('he-IL')}
-                        {transcription.metadata?.options && (
+                        {new Date(transcription.created_at).toLocaleString('he-IL')}
+                        {transcription.transcription_model && (
                           <span className="text-gray-500">
-                            • {transcription.metadata.options.model}
-                            {transcription.metadata.options.language && ` • ${transcription.metadata.options.language}`}
+                            • {transcription.transcription_model}
+                            {transcription.language && ` • ${transcription.language}`}
                           </span>
                         )}
                       </div>

@@ -359,6 +359,57 @@ export type Database = {
           },
         ]
       }
+      transcriptions: {
+        Row: {
+          created_at: string
+          file_size_mb: number | null
+          filename: string | null
+          id: string
+          language: string | null
+          metadata: Json | null
+          original_text: string
+          processed_text: string | null
+          processing_category: string | null
+          processing_engine: string | null
+          processing_prompt: string | null
+          transcription_model: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_size_mb?: number | null
+          filename?: string | null
+          id?: string
+          language?: string | null
+          metadata?: Json | null
+          original_text: string
+          processed_text?: string | null
+          processing_category?: string | null
+          processing_engine?: string | null
+          processing_prompt?: string | null
+          transcription_model?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_size_mb?: number | null
+          filename?: string | null
+          id?: string
+          language?: string | null
+          metadata?: Json | null
+          original_text?: string
+          processed_text?: string | null
+          processing_category?: string | null
+          processing_engine?: string | null
+          processing_prompt?: string | null
+          transcription_model?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_id: string
