@@ -2,9 +2,9 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileAudio, FileVideo, X, Settings } from "lucide-react";
+import { Upload, FileAudio, FileVideo, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AudioProcessor } from "./AudioProcessor";
+import { SimpleAudioProcessor } from "./SimpleAudioProcessor";
 
 interface EnhancedMediaUploaderProps {
   onTranscription?: (text: string, metadata?: any) => void;
@@ -23,12 +23,10 @@ export const EnhancedMediaUploader = ({ onTranscription }: EnhancedMediaUploader
       setShowProcessor(true);
       
       const sizeMB = file.size / (1024 * 1024);
-      const isLarge = sizeMB > 25;
       
       toast({
         title: "קובץ נבחר",
-        description: `${file.name} (${sizeMB.toFixed(2)} MB)${isLarge ? ' - קובץ גדול' : ''}`,
-        variant: isLarge ? "default" : "default"
+        description: `${file.name} (${sizeMB.toFixed(2)} MB)`,
       });
     }
   };
@@ -55,7 +53,7 @@ export const EnhancedMediaUploader = ({ onTranscription }: EnhancedMediaUploader
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5" />
-            העלאת קבצי אודיו ווידאו מתקדמת
+            העלאת קבצי אודיו ווידאו
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -81,7 +79,7 @@ export const EnhancedMediaUploader = ({ onTranscription }: EnhancedMediaUploader
                     לחץ כאן להעלאת קובץ אודיו או וידאו
                   </p>
                   <p className="text-sm text-gray-500 mb-3">
-                    תומך בקבצים גדולים עד 100MB (רמה מקצועית)
+                    תומך בקבצים גדולים (ללא הגבלת גודל)
                   </p>
                   <div className="text-xs text-gray-400">
                     <p className="mb-1">פורמטים נתמכים:</p>
@@ -102,11 +100,6 @@ export const EnhancedMediaUploader = ({ onTranscription }: EnhancedMediaUploader
                     <p className="text-sm text-gray-500">
                       {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                     </p>
-                    {selectedFile.size > 25 * 1024 * 1024 && (
-                      <p className="text-xs text-orange-600 font-medium">
-                        קובץ גדול - יעובד במקטעים
-                      </p>
-                    )}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -133,7 +126,7 @@ export const EnhancedMediaUploader = ({ onTranscription }: EnhancedMediaUploader
       </Card>
 
       {showProcessor && selectedFile && (
-        <AudioProcessor 
+        <SimpleAudioProcessor 
           onTranscription={onTranscription}
           selectedFile={selectedFile}
         />
