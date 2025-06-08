@@ -115,22 +115,24 @@ const Index = () => {
                   <Menu className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" dir="rtl">
-                {features.map((feature, index) => (
-                  <DropdownMenuItem
-                    key={index}
-                    onClick={() => navigate(feature.path)}
-                    className="cursor-pointer flex items-center gap-3 p-3"
-                  >
-                    <div className={`w-8 h-8 ${feature.color} rounded-full flex items-center justify-center`}>
-                      <feature.icon className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">{feature.title}</div>
-                      <div className="text-sm text-gray-500">{feature.description}</div>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
+              <DropdownMenuContent className="w-56" align="end">
+                <div dir="rtl">
+                  {features.map((feature, index) => (
+                    <DropdownMenuItem
+                      key={index}
+                      onClick={() => navigate(feature.path)}
+                      className="cursor-pointer flex items-center gap-3 p-3"
+                    >
+                      <div className={`w-8 h-8 ${feature.color} rounded-full flex items-center justify-center`}>
+                        <feature.icon className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium">{feature.title}</div>
+                        <div className="text-sm text-gray-500">{feature.description}</div>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
 

@@ -15,30 +15,39 @@ import Achievements from "./pages/Achievements";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/goals" element={<Goals />} />
-            <Route path="/meetings" element={<Meetings />} />
-            <Route path="/schedules" element={<Schedules />} />
-            <Route path="/achievements" element={<Achievements />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/meetings" element={<Meetings />} />
+              <Route path="/schedules" element={<Schedules />} />
+              <Route path="/achievements" element={<Achievements />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
