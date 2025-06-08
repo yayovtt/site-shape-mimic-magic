@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,7 @@ export const SimpleAudioProcessor = ({ onTranscription, selectedFile }: SimpleAu
 
   const handleProcessAudio = async () => {
     if (!selectedFile) {
+      console.log('SimpleAudioProcessor: No file selected');
       toast({
         title: "לא נבחר קובץ",
         description: "אנא בחר קובץ אודיו תחילה",
@@ -47,7 +49,12 @@ export const SimpleAudioProcessor = ({ onTranscription, selectedFile }: SimpleAu
       return;
     }
 
-    console.log('Starting transcription with file:', selectedFile.name);
+    console.log('SimpleAudioProcessor: Starting transcription with file:', selectedFile.name);
+    console.log('SimpleAudioProcessor: File size:', selectedFile.size, 'bytes');
+    console.log('SimpleAudioProcessor: File type:', selectedFile.type);
+    console.log('SimpleAudioProcessor: Using model:', model);
+    console.log('SimpleAudioProcessor: Using language:', language);
+    
     setIsProcessing(true);
 
     try {
@@ -59,9 +66,11 @@ export const SimpleAudioProcessor = ({ onTranscription, selectedFile }: SimpleAu
       
       if (prompt.trim()) {
         formData.append('prompt', prompt);
+        console.log('SimpleAudioProcessor: Using prompt:', prompt);
       }
 
-      console.log('Calling Groq API directly...');
+      console.log('SimpleAudioProcessor: Calling Groq API directly...');
+      console.log('SimpleAudioProcessor: API endpoint: https://api.groq.com/openai/v1/audio/transcriptions');
       
       const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
         method: 'POST',
@@ -71,16 +80,24 @@ export const SimpleAudioProcessor = ({ onTranscription, selectedFile }: SimpleAu
         body: formData,
       });
 
+      console.log('SimpleAudioProcessor: Response status:', response.status);
+      console.log('SimpleAudioProcessor: Response ok:', response.ok);
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Groq API error:', errorText);
+        console.error('SimpleAudioProcessor: Groq API error response:', errorText);
+        console.error('SimpleAudioProcessor: Response headers:', Object.fromEntries(response.headers.entries()));
         throw new Error(`Groq API error: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
-      console.log('Transcription successful:', result.text?.substring(0, 100) + '...');
+      console.log('SimpleAudioProcessor: Transcription result received');
+      console.log('SimpleAudioProcessor: Result keys:', Object.keys(result));
+      console.log('SimpleAudioProcessor: Text length:', result.text?.length || 0);
+      console.log('SimpleAudioProcessor: First 200 chars:', result.text?.substring(0, 200) || 'No text');
 
       if (result.text) {
+        console.log('SimpleAudioProcessor: Calling onTranscription callback');
         onTranscription(result.text, {
           filename: selectedFile.name,
           size: selectedFile.size / (1024 * 1024),
@@ -93,17 +110,22 @@ export const SimpleAudioProcessor = ({ onTranscription, selectedFile }: SimpleAu
           description: `עובד קובץ של ${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`,
         });
       } else {
+        console.error('SimpleAudioProcessor: No text in result:', result);
         throw new Error('לא התקבל טקסט מהתמלול');
       }
 
     } catch (error) {
-      console.error('Transcription error:', error);
+      console.error('SimpleAudioProcessor: Transcription error:', error);
+      console.error('SimpleAudioProcessor: Error type:', typeof error);
+      console.error('SimpleAudioProcessor: Error message:', error instanceof Error ? error.message : String(error));
+      
       toast({
         title: "שגיאה בתמלול",
         description: error instanceof Error ? error.message : "נסה שוב או שנה את ההגדרות",
         variant: "destructive",
       });
     } finally {
+      console.log('SimpleAudioProcessor: Processing finished');
       setIsProcessing(false);
     }
   };

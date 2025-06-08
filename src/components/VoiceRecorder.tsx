@@ -18,7 +18,9 @@ export const VoiceRecorder = ({ onTranscription }: VoiceRecorderProps) => {
 
   const startRecording = async () => {
     try {
+      console.log('VoiceRecorder: Starting recording...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('VoiceRecorder: Got media stream');
       
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus'
@@ -28,13 +30,16 @@ export const VoiceRecorder = ({ onTranscription }: VoiceRecorderProps) => {
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
+        console.log('VoiceRecorder: Data available, size:', event.data.size);
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = async () => {
+        console.log('VoiceRecorder: Recording stopped, chunks:', audioChunksRef.current.length);
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        console.log('VoiceRecorder: Created blob, size:', audioBlob.size);
         await transcribeAudio(audioBlob);
         
         // Clean up
@@ -43,6 +48,7 @@ export const VoiceRecorder = ({ onTranscription }: VoiceRecorderProps) => {
 
       mediaRecorder.start();
       setIsRecording(true);
+      console.log('VoiceRecorder: Recording started');
 
       toast({
         title: "מקליט...",
@@ -50,7 +56,7 @@ export const VoiceRecorder = ({ onTranscription }: VoiceRecorderProps) => {
       });
 
     } catch (error) {
-      console.error('Error starting recording:', error);
+      console.error('VoiceRecorder: Error starting recording:', error);
       toast({
         title: "שגיאה בהקלטה",
         description: "לא ניתן לגשת למיקרופון",
@@ -60,6 +66,7 @@ export const VoiceRecorder = ({ onTranscription }: VoiceRecorderProps) => {
   };
 
   const stopRecording = () => {
+    console.log('VoiceRecorder: Stopping recording...');
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
@@ -69,43 +76,52 @@ export const VoiceRecorder = ({ onTranscription }: VoiceRecorderProps) => {
 
   const transcribeAudio = async (audioBlob: Blob) => {
     try {
-      console.log('Starting voice transcription...');
+      console.log('VoiceRecorder: Starting voice transcription...');
+      console.log('VoiceRecorder: Audio blob size:', audioBlob.size);
       
       // Convert blob to base64
       const arrayBuffer = await audioBlob.arrayBuffer();
       const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      console.log('VoiceRecorder: Converted to base64, length:', base64Audio.length);
 
-      console.log('Calling groq-transcription function...');
+      console.log('VoiceRecorder: Calling groq-transcription function...');
 
       // Call Groq transcription function
       const { data, error } = await supabase.functions.invoke('groq-transcription', {
         body: { audio: base64Audio }
       });
 
+      console.log('VoiceRecorder: Supabase function response received');
+      console.log('VoiceRecorder: Error:', error);
+      console.log('VoiceRecorder: Data:', data);
+
       if (error) {
-        console.error('Supabase function error:', error);
+        console.error('VoiceRecorder: Supabase function error:', error);
         throw error;
       }
 
       if (data?.text) {
-        console.log('Voice transcription successful:', data.text);
+        console.log('VoiceRecorder: Voice transcription successful, text length:', data.text.length);
+        console.log('VoiceRecorder: First 100 chars:', data.text.substring(0, 100));
         onTranscription(data.text);
         toast({
           title: "תמלול הושלם!",
           description: "הטקסט נוסף למערכת",
         });
       } else {
+        console.error('VoiceRecorder: No text in response:', data);
         throw new Error('לא התקבל טקסט מהתמלול');
       }
 
     } catch (error) {
-      console.error('Transcription error:', error);
+      console.error('VoiceRecorder: Transcription error:', error);
       toast({
         title: "שגיאה בתמלול",
         description: "נסה שוב או כתוב את ההודעה ידנית",
         variant: "destructive",
       });
     } finally {
+      console.log('VoiceRecorder: Processing finished');
       setIsProcessing(false);
     }
   };
