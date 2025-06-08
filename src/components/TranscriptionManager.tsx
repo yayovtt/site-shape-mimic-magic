@@ -123,7 +123,7 @@ export const TranscriptionManager = () => {
   return (
     <div className="space-y-6 p-6" dir="rtl">
       {/* Main Header */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-2">
         <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-500 to-green-400 bg-clip-text text-transparent mb-2">
           מרכז תמלול וניהול טקסטים מתקדם
         </h1>
