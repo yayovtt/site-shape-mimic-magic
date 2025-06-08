@@ -84,16 +84,6 @@ export const TranscriptionActions = ({
     openChatGPT(textToShow);
   };
 
-  const handleDelete = () => {
-    if (onDelete) {
-      onDelete();
-      toast({
-        title: "נמחק בהצלחה",
-        description: "התמלול נמחק מההיסטוריה",
-      });
-    }
-  };
-
   return (
     <div className="flex items-center gap-1">
       <Button
@@ -147,7 +137,7 @@ export const TranscriptionActions = ({
         <Button
           size="sm"
           variant="ghost"
-          onClick={handleDelete}
+          onClick={onDelete}
           className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 h-8 w-8"
           title="מחק תמלול"
         >

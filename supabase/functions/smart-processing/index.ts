@@ -21,7 +21,7 @@ serve(async (req) => {
     console.log('Received request:', { 
       textLength: text?.length, 
       engine, 
-      categories: Array.isArray(categories) ? categories : [categories],
+      categories,
       hasCustomPrompt: !!customPrompt 
     });
     
@@ -29,10 +29,9 @@ serve(async (req) => {
       throw new Error('Missing required parameters: text and engine');
     }
 
-    // Convert categories to array if needed
-    const categoriesArray = Array.isArray(categories) ? categories : (categories ? [categories] : []);
-    const categoryString = categoriesArray.join(', ');
-    console.log(`Processing with ${engine} for categories: ${categoryString}`);
+    // Handle categories properly - they come as an array of Hebrew labels
+    const categoryLabels = Array.isArray(categories) ? categories : (categories ? [categories] : []);
+    console.log(`Processing with ${engine} for categories:`, categoryLabels);
 
     let processedText = '';
     
@@ -41,7 +40,7 @@ serve(async (req) => {
         throw new Error('OpenAI API key not configured');
       }
 
-      const systemPrompt = customPrompt || getSystemPrompt(categoryString);
+      const systemPrompt = customPrompt || getSystemPrompt(categoryLabels);
       console.log('Using system prompt for ChatGPT');
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -82,7 +81,7 @@ serve(async (req) => {
         throw new Error('Claude API key not configured');
       }
 
-      const systemPrompt = customPrompt || getSystemPrompt(categoryString);
+      const systemPrompt = customPrompt || getSystemPrompt(categoryLabels);
       console.log('Using system prompt for Claude');
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -142,9 +141,9 @@ serve(async (req) => {
   }
 });
 
-function getSystemPrompt(categories: string): string {
-  if (!categories) {
-    return 'אתה עוזר AI מומחה בעיבוד טקסטים בעברית. תפקידך לשפר ולארגן את הטקסט הנתון בצורה ברורה ומועילה. הציג את התוצאה בעברית בפורמט ברור ומסודר.';
+function getSystemPrompt(categories: string[]): string {
+  if (!categories || categories.length === 0) {
+    return 'אתה עוזר AI מומחה בעיבוד טקסטים בעברית. תפקידך לשפר ולארגן את הטקסט הנתון בצורה ברורה ומועילת. הציג את התוצאה בעברית בפורמט ברור ומסודר.';
   }
 
   const categoryPrompts: Record<string, string> = {
@@ -158,16 +157,12 @@ function getSystemPrompt(categories: string): string {
     'תיקון שגיאות כתיב ועריכה לשונית': 'אתה עוזר AI מומחה בתיקון דקדוק ועריכה בעברית. תפקידך לתקן שגיאות כתיב, דקדוק ואיות, לשפר את הניסוח והזרימה של הטקסט. החזר טקסט מתוקן ומעורך בעברית תקנית וברורה.'
   };
 
-  // Create a combined prompt based on selected categories
-  const selectedPrompts = categories.split(', ').map(category => 
-    categoryPrompts[category.trim()] || categoryPrompts['סיכום']
-  );
-
-  if (selectedPrompts.length === 1) {
-    return selectedPrompts[0];
+  if (categories.length === 1) {
+    return categoryPrompts[categories[0]] || categoryPrompts['סיכום'];
   }
 
-  return `אתה עוזר AI מומחה בעיבוד טקסטים בעברית. תפקידך לעבד את הטקסט הנתון על פי הקטגוריות הבאות: ${categories}. 
+  const categoryString = categories.join(', ');
+  return `אתה עוזר AI מומחה בעיבוד טקסטים בעברית. תפקידך לעבד את הטקסט הנתון על פי הקטגוריות הבאות: ${categoryString}. 
   
 עבור כל קטגוריה, בצע את המשימה המתאימה והציג את התוצאות בפורמט ברור ומסודר בעברית. אם יש מספר קטגוריות, ארגן את התוצאה עם כותרות נפרדות לכל קטגוריה.`;
 }
