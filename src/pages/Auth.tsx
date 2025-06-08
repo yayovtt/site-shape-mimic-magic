@@ -39,35 +39,25 @@ const Auth = () => {
 
     setLoading(true);
 
-    console.log("Starting authentication process:", { isLogin, email });
-
     try {
       const { error } = isLogin 
         ? await signIn(email, password)
         : await signUp(email, password);
 
-      console.log("Authentication result:", { error });
-
       if (error) {
         console.error("Authentication error:", error);
         
-        // Handle specific error messages
-        let errorMessage = error.message || "שגיאה לא ידועה";
+        let errorMessage = "שגיאה לא ידועה";
         
-        if (error.message && error.message.includes("Invalid login credentials")) {
-          errorMessage = "פרטי ההתחברות שגויים. אנא בדוק את האימייל והסיסמה";
-        } else if (error.message && error.message.includes("User already registered")) {
-          errorMessage = "המשתמש כבר רשום במערכת. נסה להתחבר במקום להירשם";
-          // Switch to login mode automatically
+        if (error.message?.includes("Invalid login credentials")) {
+          errorMessage = "פרטי ההתחברות שגויים";
+        } else if (error.message?.includes("User already registered")) {
+          errorMessage = "המשתמש כבר רשום במערכת";
           setIsLogin(true);
-        } else if (error.message && error.message.includes("Password should be at least")) {
+        } else if (error.message?.includes("Password should be at least")) {
           errorMessage = "הסיסמה חייבת להכיל לפחות 6 תווים";
-        } else if (error.message && error.message.includes("Unable to validate email address")) {
+        } else if (error.message?.includes("Unable to validate email address")) {
           errorMessage = "כתובת האימייל לא תקינה";
-        } else if (error.message && error.message.includes("Database error")) {
-          errorMessage = "יש בעיה זמנית במערכת. אנא נסה שוב מאוחר יותר";
-        } else if (error.message && error.message.includes("יש בעיה זמנית במערכת")) {
-          errorMessage = error.message;
         }
         
         toast({
@@ -76,15 +66,14 @@ const Auth = () => {
           variant: "destructive",
         });
       } else {
-        console.log("Authentication successful, navigating to home");
         toast({
           title: isLogin ? "התחברת בהצלחה" : "נרשמת בהצלחה",
-          description: isLogin ? "ברוך הבא!" : "ברוך הבא למערכת!",
+          description: "ברוך הבא!",
         });
         navigate("/");
       }
     } catch (error) {
-      console.error("Authentication catch error:", error);
+      console.error("Authentication error:", error);
       toast({
         title: "שגיאה",
         description: "משהו השתבש. אנא נסה שוב",
@@ -93,13 +82,6 @@ const Auth = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const switchMode = () => {
-    setIsLogin(!isLogin);
-    setEmail("");
-    setPassword("");
-    // Clear any error states
   };
 
   return (
@@ -125,7 +107,6 @@ const Auth = () => {
                 required
                 disabled={loading}
                 className="text-right"
-                autoComplete="email"
               />
             </div>
             <div>
@@ -142,7 +123,6 @@ const Auth = () => {
                 disabled={loading}
                 minLength={6}
                 className="text-right"
-                autoComplete={isLogin ? "current-password" : "new-password"}
               />
             </div>
             <Button
@@ -156,7 +136,7 @@ const Auth = () => {
           <div className="text-center mt-4">
             <Button
               variant="link"
-              onClick={switchMode}
+              onClick={() => setIsLogin(!isLogin)}
               disabled={loading}
               className="text-pink-600 hover:text-pink-700"
             >
