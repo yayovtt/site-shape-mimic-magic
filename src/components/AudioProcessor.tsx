@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,8 +37,8 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
     temperature: 0,
     timestampGranularities: ['segment'],
     enableChunking: false,
-    chunkSize: 20, // MB
-    chunkOverlap: 1 // seconds
+    chunkSize: 20,
+    chunkOverlap: 1
   });
   const { toast } = useToast();
 
@@ -70,6 +69,7 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
       chunks.push(chunk);
     }
 
+    console.log(`Processing ${chunks.length} chunks for large file`);
     toast({
       title: "מעבד קובץ גדול",
       description: `מחלק לקובץ ל-${chunks.length} חלקים לעיבוד`,
@@ -79,6 +79,7 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
     
     for (let i = 0; i < chunks.length; i++) {
       try {
+        console.log(`Processing chunk ${i + 1}/${chunks.length}`);
         const chunk = chunks[i];
         const arrayBuffer = await chunk.arrayBuffer();
         const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
@@ -93,7 +94,10 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
           }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error(`Error processing chunk ${i + 1}:`, error);
+          throw error;
+        }
         
         if (data?.text) {
           transcriptions.push(data.text);
@@ -115,7 +119,7 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
     return transcriptions.join(' ');
   };
 
-  const processAudio = async () => {
+  const handleProcessAudio = async () => {
     if (!selectedFile) {
       toast({
         title: "לא נבחר קובץ",
@@ -125,6 +129,7 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
       return;
     }
 
+    console.log('Starting audio processing for file:', selectedFile.name);
     setIsProcessing(true);
 
     try {
@@ -132,11 +137,15 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
       const maxSize = 25;
       const needsChunking = fileSizeMB > maxSize || options.enableChunking;
 
+      console.log(`File size: ${fileSizeMB}MB, needs chunking: ${needsChunking}`);
+
       let transcriptionText: string;
 
       if (needsChunking) {
+        console.log('Processing with chunking');
         transcriptionText = await processAudioChunks(selectedFile);
       } else {
+        console.log('Processing as single file');
         const arrayBuffer = await selectedFile.arrayBuffer();
         const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
@@ -150,11 +159,15 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
           }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Transcription error:', error);
+          throw error;
+        }
         transcriptionText = data?.text || '';
       }
 
       if (transcriptionText) {
+        console.log('Transcription successful:', transcriptionText.substring(0, 100) + '...');
         onTranscription(transcriptionText, {
           filename: selectedFile.name,
           size: fileSizeMB,
@@ -174,7 +187,7 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
       console.error('Transcription error:', error);
       toast({
         title: "שגיאה בתמלול",
-        description: "נסה שוב או שנה את ההגדרות",
+        description: error instanceof Error ? error.message : "נסה שוב או שנה את ההגדרות",
         variant: "destructive",
       });
     } finally {
@@ -274,46 +287,6 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
 
         {showAdvanced && (
           <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
-            {/* Chunking Options */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>חילוק קבצים גדולים</Label>
-                <Switch 
-                  checked={options.enableChunking}
-                  onCheckedChange={(checked) => updateOption('enableChunking', checked)}
-                />
-              </div>
-              
-              {options.enableChunking && (
-                <div className="space-y-3 pl-4 border-l-2 border-blue-200">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-sm min-w-fit">גודל חלק (MB):</Label>
-                    <Input
-                      type="number"
-                      value={options.chunkSize}
-                      onChange={(e) => updateOption('chunkSize', Number(e.target.value))}
-                      className="w-20"
-                      min="1"
-                      max="25"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-sm min-w-fit">חפיפה (שניות):</Label>
-                    <Input
-                      type="number"
-                      value={options.chunkOverlap}
-                      onChange={(e) => updateOption('chunkOverlap', Number(e.target.value))}
-                      className="w-20"
-                      min="0"
-                      max="5"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
             {/* Response Format */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -400,7 +373,7 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
 
         {/* Process Button */}
         <Button
-          onClick={processAudio}
+          onClick={handleProcessAudio}
           disabled={!selectedFile || isProcessing}
           className="w-full"
           size="lg"
