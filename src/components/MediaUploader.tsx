@@ -1,19 +1,17 @@
 
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileAudio, FileVideo, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MediaUploaderProps {
-  onTranscription?: (text: string) => void;
+  onTranscription?: (text: string, filename?: string) => void;
 }
 
 export const MediaUploader = ({ onTranscription }: MediaUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [transcriptedText, setTranscriptedText] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -21,7 +19,6 @@ export const MediaUploader = ({ onTranscription }: MediaUploaderProps) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      setTranscriptedText(""); // Clear previous transcription
       toast({
         title: "קובץ נבחר",
         description: `נבחר: ${file.name}`,
@@ -33,7 +30,6 @@ export const MediaUploader = ({ onTranscription }: MediaUploaderProps) => {
     if (!selectedFile) return;
 
     setIsProcessing(true);
-    setTranscriptedText("");
     
     try {
       console.log('Starting file transcription for:', selectedFile.name);
@@ -56,8 +52,9 @@ export const MediaUploader = ({ onTranscription }: MediaUploaderProps) => {
 
       if (data?.text) {
         console.log('Transcription successful:', data.text);
-        setTranscriptedText(data.text);
-        onTranscription?.(data.text);
+        if (onTranscription) {
+          onTranscription(data.text, selectedFile.name);
+        }
         toast({
           title: "תמלול הושלם!",
           description: "הטקסט נוצר בהצלחה",
@@ -80,101 +77,86 @@ export const MediaUploader = ({ onTranscription }: MediaUploaderProps) => {
 
   const clearFile = () => {
     setSelectedFile(null);
-    setTranscriptedText("");
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
   return (
-    <Card dir="rtl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="w-5 h-5" />
-          העלאת קבצי אודיו ווידאו לתמלול
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="audio/*,video/*"
-            className="hidden"
-            onChange={handleFileSelect}
-          />
-          
-          {!selectedFile ? (
-            <div
-              className="cursor-pointer flex flex-col items-center gap-2 text-center"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                <Upload className="w-6 h-6 text-gray-500" />
-              </div>
-              <p className="text-gray-600">לחץ כאן להעלאת קובץ אודיו או וידאו</p>
-              <p className="text-sm text-gray-400">תומך ב-MP3, WAV, MP4, WEBM ועוד</p>
+    <div className="space-y-4">
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="audio/*,video/*"
+          className="hidden"
+          onChange={handleFileSelect}
+        />
+        
+        {!selectedFile ? (
+          <div
+            className="cursor-pointer flex flex-col items-center gap-2 text-center"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+              <Upload className="w-5 h-5 text-gray-500" />
             </div>
-          ) : (
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                {selectedFile.type.startsWith('audio/') ? (
-                  <FileAudio className="w-8 h-8 text-blue-500" />
-                ) : (
-                  <FileVideo className="w-8 h-8 text-purple-500" />
-                )}
-                <div>
-                  <p className="font-medium">{selectedFile.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFile}
-                className="text-red-500 hover:text-red-700"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {selectedFile && (
-          <div className="flex gap-2">
-            <Button
-              onClick={processFile}
-              disabled={isProcessing}
-              className="flex-1"
-            >
-              {isProcessing ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  מתמלל...
-                </>
+            <p className="text-sm text-gray-600">לחץ כאן להעלאת קובץ אודיו או וידאו</p>
+            <p className="text-xs text-gray-400">תומך ב-MP3, WAV, MP4, WEBM ועוד</p>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              {selectedFile.type.startsWith('audio/') ? (
+                <FileAudio className="w-6 h-6 text-blue-500" />
               ) : (
-                'תמלל קובץ'
+                <FileVideo className="w-6 h-6 text-purple-500" />
               )}
-            </Button>
+              <div>
+                <p className="font-medium text-sm">{selectedFile.name}</p>
+                <p className="text-xs text-gray-500">
+                  {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              </div>
+            </div>
             <Button
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
+              variant="ghost"
+              size="sm"
+              onClick={clearFile}
+              className="text-red-500 hover:text-red-700"
             >
-              בחר קובץ אחר
+              <X className="w-4 h-4" />
             </Button>
           </div>
         )}
+      </div>
 
-        {/* Display transcribed text */}
-        {transcriptedText && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h4 className="font-medium text-green-800 mb-2">תוצאת התמלול:</h4>
-            <p className="text-green-700 whitespace-pre-wrap">{transcriptedText}</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {selectedFile && (
+        <div className="flex gap-2">
+          <Button
+            onClick={processFile}
+            disabled={isProcessing}
+            className="flex-1"
+            size="sm"
+          >
+            {isProcessing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                מתמלל...
+              </>
+            ) : (
+              'תמלל קובץ'
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            בחר קובץ אחר
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };

@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { MediaUploader } from "@/components/MediaUploader";
 import { QuickStats } from "@/components/QuickStats";
+import { TranscriptionManager } from "@/components/TranscriptionManager";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -36,13 +37,6 @@ const Index = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
-  };
-
-  const handleVoiceTranscription = (text: string) => {
-    toast({
-      title: "תמלול הושלם!",
-      description: `הטקסט שתומלל: ${text}`,
-    });
   };
 
   const features = [
@@ -115,25 +109,7 @@ const Index = () => {
         {/* Quick Stats Section */}
         <QuickStats onNavigate={navigate} />
 
-        {/* Voice Recorder Section */}
-        <Card className="mb-8" dir="rtl">
-          <CardHeader>
-            <CardTitle>תמלול קול מהיר</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <p className="text-gray-600">הקלט קול לתמלול מהיר:</p>
-              <VoiceRecorder onTranscription={handleVoiceTranscription} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Media Upload Section */}
-        <div className="mb-8">
-          <MediaUploader onTranscription={handleVoiceTranscription} />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {features.map((feature, index) => (
             <Card 
               key={index} 
@@ -152,6 +128,9 @@ const Index = () => {
             </Card>
           ))}
         </div>
+
+        {/* Transcription Section */}
+        <TranscriptionManager />
       </div>
     </div>
   );
