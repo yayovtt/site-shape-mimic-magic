@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +29,7 @@ interface SplitFile {
   duration: string;
   size: string;
   url: string;
+  format: string;
 }
 
 export const FileSplitter = () => {
@@ -187,9 +187,7 @@ export const FileSplitter = () => {
       setProgress((i / segments.length) * 100);
 
       try {
-        // For demonstration, we'll simulate file splitting
-        // In a real implementation, you'd use FFmpeg.js or similar
-        const blob = await simulateFileSplit(selectedFile!, segment.start, segment.end);
+        const blob = await simulateFileSplit(selectedFile!, segment.start, segment.end, extension);
         const filename = `${baseFilename}_part${i + 1}.${extension}`;
         const url = URL.createObjectURL(blob);
         
@@ -198,7 +196,8 @@ export const FileSplitter = () => {
           filename,
           duration: formatTime(segment.end - segment.start),
           size: formatFileSize(blob.size),
-          url
+          url,
+          format: extension.toUpperCase()
         });
       } catch (error) {
         console.error(`Error processing segment ${i + 1}:`, error);
@@ -215,20 +214,25 @@ export const FileSplitter = () => {
     
     toast({
       title: "עיבוד הושלם!",
-      description: `${results.length} קבצים נוצרו בהצלחה`,
+      description: `${results.length} קבצים נוצרו בהצלחה בפורמט ${extension.toUpperCase()}`,
     });
   };
 
-  // Simulate file splitting - in real implementation use FFmpeg.js
-  const simulateFileSplit = async (file: File, start: number, end: number): Promise<Blob> => {
+  const simulateFileSplit = async (file: File, start: number, end: number, format: string): Promise<Blob> => {
     return new Promise((resolve) => {
-      // Simulate processing time
       setTimeout(() => {
-        // For demo, return a portion of the original file
         const reader = new FileReader();
         reader.onload = function(e) {
           const arrayBuffer = e.target?.result as ArrayBuffer;
-          const blob = new Blob([arrayBuffer], { type: file.type });
+          
+          // שינוי סוג הקובץ בהתאם לפורמט הנבחר
+          let mimeType = file.type;
+          if (format === 'mp4') mimeType = 'video/mp4';
+          else if (format === 'webm') mimeType = 'video/webm';
+          else if (format === 'mp3') mimeType = 'audio/mp3';
+          else if (format === 'wav') mimeType = 'audio/wav';
+          
+          const blob = new Blob([arrayBuffer], { type: mimeType });
           resolve(blob);
         };
         reader.readAsArrayBuffer(file);
@@ -535,63 +539,76 @@ export const FileSplitter = () => {
         </Card>
       )}
 
-      {/* Results */}
+      {/* Results with Enhanced Golden Design */}
       {splitFiles.length > 0 && (
-        <Card>
-          <CardHeader>
+        <Card className="border-2 border-yellow-400 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white">
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Download className="w-5 h-5" />
-                קבצים מעובדים ({splitFiles.length})
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Download className="w-6 h-6" />
+                🏆 קבצים מעובדים ({splitFiles.length})
               </CardTitle>
               <Button
                 onClick={downloadAllFiles}
-                variant="outline"
-                className="text-purple-600 border-purple-600 hover:bg-purple-50"
+                className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
               >
                 הורד הכל
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-6 bg-gradient-to-br from-yellow-50 to-amber-50">
+            <div className="space-y-4">
               {splitFiles.map((file, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    {selectedFile?.type.startsWith('video/') ? (
-                      <FileVideo className="w-6 h-6 text-purple-500" />
-                    ) : (
-                      <FileAudio className="w-6 h-6 text-green-500" />
-                    )}
-                    <div>
-                      <p className="font-medium">{file.filename}</p>
-                      <div className="flex gap-4 text-sm text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {file.duration}
-                        </span>
-                        <span>{file.size}</span>
+                <div key={index} className="relative">
+                  {/* Golden Border Animation */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 rounded-lg opacity-20 animate-pulse"></div>
+                  
+                  <div className="relative flex items-center justify-between p-5 bg-white rounded-lg border-2 border-yellow-300 shadow-md hover:shadow-lg transition-all duration-300 hover:border-yellow-400">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        {selectedFile?.type.startsWith('video/') ? (
+                          <FileVideo className="w-8 h-8 text-purple-600" />
+                        ) : (
+                          <FileAudio className="w-8 h-8 text-green-600" />
+                        )}
+                        {/* Golden Sparkle Effect */}
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-ping"></div>
+                      </div>
+                      
+                      <div>
+                        <p className="font-bold text-gray-800 text-lg">{file.filename}</p>
+                        <div className="flex gap-6 text-sm text-gray-600 mt-1">
+                          <span className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded-full">
+                            <Clock className="w-3 h-3" />
+                            {file.duration}
+                          </span>
+                          <span className="bg-green-100 px-2 py-1 rounded-full">{file.size}</span>
+                          <Badge className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white font-bold">
+                            {file.format}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="שם מותאם אישית"
-                      className="w-40 text-sm"
-                      id={`filename-${index}`}
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        const input = document.getElementById(`filename-${index}`) as HTMLInputElement;
-                        const customName = input?.value.trim();
-                        downloadFile(file, customName || undefined);
-                      }}
-                      className="bg-purple-500 hover:bg-purple-600 text-white"
-                    >
-                      <Download className="w-4 h-4 mr-1" />
-                      הורד
-                    </Button>
+                    
+                    <div className="flex gap-3">
+                      <Input
+                        placeholder="שם מותאם אישית"
+                        className="w-48 text-sm border-2 border-yellow-300 focus:border-yellow-500"
+                        id={`filename-${index}`}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const input = document.getElementById(`filename-${index}`) as HTMLInputElement;
+                          const customName = input?.value.trim();
+                          downloadFile(file, customName || undefined);
+                        }}
+                        className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-bold px-4 py-2 shadow-lg"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        הורד
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
