@@ -10,18 +10,25 @@ const corsHeaders = {
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const CLAUDE_API_KEY = Deno.env.get('CLAUDE_API_KEY');
 
-// Function to split text into chunks
-function splitTextIntoChunks(text: string, maxChunkSize: number = 3000): string[] {
+// Function to split text into chunks more intelligently
+function splitTextIntoChunks(text: string, maxChunkSize: number = 2500): string[] {
+  if (text.length <= maxChunkSize) {
+    return [text];
+  }
+
   const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
   const chunks: string[] = [];
   let currentChunk = '';
 
   for (const sentence of sentences) {
-    if ((currentChunk + sentence).length > maxChunkSize && currentChunk.length > 0) {
+    const trimmedSentence = sentence.trim();
+    const potentialChunk = currentChunk ? currentChunk + '. ' + trimmedSentence : trimmedSentence;
+    
+    if (potentialChunk.length > maxChunkSize && currentChunk.length > 0) {
       chunks.push(currentChunk.trim());
-      currentChunk = sentence.trim();
+      currentChunk = trimmedSentence;
     } else {
-      currentChunk += (currentChunk ? '. ' : '') + sentence.trim();
+      currentChunk = potentialChunk;
     }
   }
   
@@ -54,7 +61,7 @@ serve(async (req) => {
       throw new Error('Custom prompt is required');
     }
 
-    console.log(`Processing with ${engine} using custom prompt only`);
+    console.log(`Processing with ${engine} using custom prompt`);
 
     let processedText = '';
     
@@ -64,46 +71,107 @@ serve(async (req) => {
         throw new Error('מפתח OpenAI API אינו מוגדר כראוי. אנא בדוק שהמפתח תקין ומתחיל ב-sk-');
       }
 
-      console.log('Using custom prompt for ChatGPT');
+      console.log('Processing with ChatGPT');
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: customPrompt.trim()
-            },
-            {
-              role: 'user',
-              content: text
+      // For ChatGPT, try to send the full text first, split only if necessary
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: customPrompt.trim()
+              },
+              {
+                role: 'user',
+                content: text
+              }
+            ],
+            temperature: 0.7,
+            max_tokens: 4000
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('OpenAI API error:', errorData);
+          
+          if (response.status === 401) {
+            throw new Error('מפתח OpenAI API אינו תקף. אנא בדוק שהמפתח נכון ופעיל.');
+          } else if (response.status === 429) {
+            throw new Error('חריגה מהמכסה של OpenAI API. אנא נסה שוב מאוחר יותר או בדוק את תוכנית החיוב שלך.');
+          } else if (response.status === 413 || (errorData.error && errorData.error.message.includes('token'))) {
+            console.log('Text too long for single request, splitting into chunks');
+            // Handle chunking for ChatGPT
+            const textChunks = splitTextIntoChunks(text, 2000);
+            console.log(`Split text into ${textChunks.length} chunks for ChatGPT`);
+            
+            const processedChunks: string[] = [];
+
+            for (let i = 0; i < textChunks.length; i++) {
+              const chunk = textChunks[i];
+              console.log(`Processing ChatGPT chunk ${i + 1}/${textChunks.length}, length: ${chunk.length}`);
+
+              let chunkPrompt = customPrompt.trim();
+              if (textChunks.length > 1) {
+                chunkPrompt += `\n\nזהו חלק ${i + 1} מתוך ${textChunks.length} חלקים של הטקסט המלא. עבד את החלק הזה בהתאם להוראות שלמעלה ושמור על רציפות עם החלקים הקודמים.`;
+              }
+
+              const chunkResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model: 'gpt-4o-mini',
+                  messages: [
+                    {
+                      role: 'system',
+                      content: chunkPrompt
+                    },
+                    {
+                      role: 'user',
+                      content: chunk
+                    }
+                  ],
+                  temperature: 0.7,
+                  max_tokens: 2000
+                }),
+              });
+
+              if (!chunkResponse.ok) {
+                const chunkErrorData = await chunkResponse.json();
+                console.error(`ChatGPT chunk ${i + 1} error:`, chunkErrorData);
+                throw new Error(`שגיאה בעיבוד חלק ${i + 1}: ${chunkErrorData.error?.message || 'שגיאה לא ידועה'}`);
+              }
+
+              const chunkResult = await chunkResponse.json();
+              const chunkText = chunkResult.choices[0]?.message?.content || '';
+              processedChunks.push(chunkText);
+              console.log(`ChatGPT chunk ${i + 1} completed, length: ${chunkText.length}`);
             }
-          ],
-          temperature: 0.7
-        }),
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('OpenAI API error:', errorData);
-        
-        if (response.status === 401) {
-          throw new Error('מפתח OpenAI API אינו תקף. אנא בדוק שהמפתח נכון ופעיל.');
-        } else if (response.status === 429) {
-          throw new Error('חריגה מהמכסה של OpenAI API. אנא נסה שוב מאוחר יותר.');
+            processedText = processedChunks.join('\n\n');
+            console.log(`Combined ${processedChunks.length} ChatGPT chunks, total length: ${processedText.length}`);
+          } else {
+            throw new Error(`שגיאה ב-OpenAI API: ${response.status} - ${errorData.error?.message || 'שגיאה לא ידועה'}`);
+          }
         } else {
-          throw new Error(`שגיאה ב-OpenAI API: ${response.status} - ${errorData.error?.message || 'שגיאה לא ידועה'}`);
+          const result = await response.json();
+          processedText = result.choices[0]?.message?.content || '';
+          console.log('ChatGPT processing completed successfully (single request)');
         }
+      } catch (error) {
+        console.error('ChatGPT processing error:', error);
+        throw error;
       }
-
-      const result = await response.json();
-      processedText = result.choices[0]?.message?.content || '';
-      console.log('ChatGPT processing completed successfully');
       
     } else if (engine === 'claude') {
       if (!CLAUDE_API_KEY) {
@@ -112,26 +180,26 @@ serve(async (req) => {
       }
 
       console.log('Claude API key found, proceeding with request');
-      console.log('Using custom prompt for Claude');
+      console.log('Processing with Claude');
 
-      // Split text into chunks if it's long
-      const textChunks = splitTextIntoChunks(text, 3000);
-      console.log(`Split text into ${textChunks.length} chunks`);
+      // Split text into chunks for Claude
+      const textChunks = splitTextIntoChunks(text, 2500);
+      console.log(`Split text into ${textChunks.length} chunks for Claude`);
       
       const processedChunks: string[] = [];
 
       for (let i = 0; i < textChunks.length; i++) {
         const chunk = textChunks[i];
-        console.log(`Processing chunk ${i + 1}/${textChunks.length}, length: ${chunk.length}`);
+        console.log(`Processing Claude chunk ${i + 1}/${textChunks.length}, length: ${chunk.length}`);
 
         let chunkPrompt = customPrompt.trim();
         if (textChunks.length > 1) {
-          chunkPrompt += `\n\nזהו חלק ${i + 1} מתוך ${textChunks.length} חלקים של הטקסט המלא. עבד את החלק הזה בהתאם להוראות שלמעלה.`;
+          chunkPrompt += `\n\nזהו חלק ${i + 1} מתוך ${textChunks.length} חלקים של הטקסט המלא. עבד את החלק הזה בהתאם להוראות שלמעלה ושמור על רציפות עם החלקים הקודמים.`;
         }
 
         const requestBody = {
           model: 'claude-3-5-haiku-20241022',
-          max_tokens: 8192,
+          max_tokens: 4096,
           system: chunkPrompt,
           messages: [
             {
@@ -180,29 +248,25 @@ serve(async (req) => {
         console.log(`Claude API response received for chunk ${i + 1}, parsing content...`);
         const chunkResult = result.content?.[0]?.text || '';
         processedChunks.push(chunkResult);
-        console.log(`Chunk ${i + 1} processing completed, text length:`, chunkResult.length);
+        console.log(`Claude chunk ${i + 1} processing completed, text length:`, chunkResult.length);
       }
 
       // Combine all processed chunks
-      if (textChunks.length > 1) {
-        processedText = processedChunks.join('\n\n');
-        console.log(`Combined ${processedChunks.length} processed chunks, total length:`, processedText.length);
-      } else {
-        processedText = processedChunks[0] || '';
-      }
+      processedText = processedChunks.join('\n\n');
+      console.log(`Combined ${processedChunks.length} Claude processed chunks, total length:`, processedText.length);
       
       console.log('Claude processing completed successfully');
     } else {
       throw new Error('Invalid engine specified. Must be "chatgpt" or "claude"');
     }
 
-    if (!processedText) {
-      throw new Error('No processed text received from AI service');
+    if (!processedText || processedText.trim() === '') {
+      throw new Error('לא התקבל טקסט מעובד מהמנוע הנבחר');
     }
 
-    console.log('Processing completed, returning result');
+    console.log('Processing completed successfully, returning result');
     return new Response(
-      JSON.stringify({ processedText }),
+      JSON.stringify({ processedText: processedText.trim() }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
