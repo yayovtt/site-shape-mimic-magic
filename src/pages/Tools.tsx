@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { GradientButton } from "@/components/GradientButton";
 import { StatusCard } from "@/components/StatusCard";
 import { MotivationalQuotes } from "@/components/MotivationalQuotes";
+import { GoogleCalendarIntegration } from "@/components/GoogleCalendarIntegration";
 import { 
   CheckSquare, 
   Target, 
@@ -192,6 +194,11 @@ const Tools = () => {
         {/* Motivational Quotes */}
         <div className="mb-8">
           <MotivationalQuotes />
+        </div>
+
+        {/* Google Calendar Integration */}
+        <div className="mb-8">
+          <GoogleCalendarIntegration />
         </div>
 
         {/* Tools Grid - Horizontal Layout */}
