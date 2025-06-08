@@ -124,7 +124,7 @@ export const TranscriptionManager = () => {
     <div className="space-y-6 p-6" dir="rtl">
       {/* Main Header */}
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-green-400 bg-clip-text text-transparent mb-2">
+        <h1 className="text-3xl font-bold text-black mb-2">
           מרכז תמלול וניהול טקסטים מתקדם
         </h1>
         <p className="text-gray-600">הקלטה, תמלול, עיבוד חכם וחילוק קבצים</p>
