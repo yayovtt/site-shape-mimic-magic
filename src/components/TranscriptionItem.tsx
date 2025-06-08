@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -197,6 +196,7 @@ export const TranscriptionItem = ({
           textToShow={textToShow}
           isExpanded={isExpanded}
           onToggleExpand={onToggleExpand}
+          onDelete={deleteTranscription}
         />
       </div>
 
@@ -294,14 +294,6 @@ export const TranscriptionItem = ({
           >
             <Edit3 className="w-4 h-4 ml-1" />
             ערוך
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={deleteTranscription}
-            className="text-red-600 border-red-200 hover:bg-red-50 text-sm h-8"
-          >
-            <X className="w-4 h-4" />
           </Button>
         </div>
       )}

@@ -29,8 +29,9 @@ serve(async (req) => {
       throw new Error('Missing required parameters: text and engine');
     }
 
-    // Convert categories to string for processing
-    const categoryString = Array.isArray(categories) ? categories.join(', ') : (categories || '');
+    // Convert categories to array if needed
+    const categoriesArray = Array.isArray(categories) ? categories : (categories ? [categories] : []);
+    const categoryString = categoriesArray.join(', ');
     console.log(`Processing with ${engine} for categories: ${categoryString}`);
 
     let processedText = '';
