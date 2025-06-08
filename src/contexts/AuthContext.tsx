@@ -11,6 +11,9 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  getCurrentUser: () => Promise<User | null>;
+  isUserLoggedIn: () => Promise<boolean>;
+  getUserProfile: () => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -123,6 +126,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const getCurrentUser = async (): Promise<User | null> => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error('שגיאה בקבלת המשתמש:', error.message);
+        return null;
+      }
+      
+      return user;
+    } catch (error) {
+      console.error('שגיאה לא צפויה בקבלת המשתמש:', error);
+      return null;
+    }
+  };
+
+  const isUserLoggedIn = async (): Promise<boolean> => {
+    const user = await getCurrentUser();
+    return user !== null;
+  };
+
+  const getUserProfile = async () => {
+    const user = await getCurrentUser();
+    if (!user) return null;
+    
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.full_name || user.email?.split('@')[0],
+      avatar: user.user_metadata?.avatar_url,
+      provider: user.app_metadata?.provider
+    };
+  };
+
   const value = {
     user,
     session,
@@ -131,6 +168,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signUp,
     signInWithGoogle,
     signOut,
+    getCurrentUser,
+    isUserLoggedIn,
+    getUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
