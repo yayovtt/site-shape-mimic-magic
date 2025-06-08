@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -224,7 +225,7 @@ export const TranscriptionItem = ({
       )}
 
       {/* Text display - preview or full */}
-      <div className="mb-3">
+      <div className="mb-3 space-y-3">
         {editingId === transcription.id ? (
           <div className="space-y-3">
             <Textarea
@@ -256,11 +257,39 @@ export const TranscriptionItem = ({
             </div>
           </div>
         ) : (
-          <div className="bg-white p-4 rounded-lg border border-gray-200" dir="rtl">
-            <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed text-right" style={{ textAlign: 'right' }}>
-              {isExpanded ? textToShow : previewText}
-            </p>
-            {!isExpanded && textToShow.length > 100 && (
+          <>
+            {/* Original Transcription */}
+            <div className="bg-white p-4 rounded-lg border border-gray-200" dir="rtl">
+              <div className="flex items-center gap-2 mb-2">
+                <Mic className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-medium text-blue-700">תמלול מקורי:</span>
+              </div>
+              <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed text-right" style={{ textAlign: 'right' }}>
+                {isExpanded ? transcription.original_text : transcription.original_text.slice(0, 100) + (transcription.original_text.length > 100 ? '...' : '')}
+              </p>
+            </div>
+
+            {/* Processed Text (if exists) */}
+            {transcription.processed_text && (
+              <div className="bg-gradient-to-br from-purple-50 to-green-50 p-4 rounded-lg border border-purple-200" dir="rtl">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-4 h-4 text-purple-500" />
+                  <span className="text-sm font-medium text-purple-700">
+                    עיבוד חכם ({transcription.processing_engine === 'chatgpt' ? 'ChatGPT' : 'Claude'}):
+                  </span>
+                  {transcription.processing_category && (
+                    <Badge variant="outline" className="text-xs">
+                      {transcription.processing_category}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed text-right" style={{ textAlign: 'right' }}>
+                  {isExpanded ? transcription.processed_text : transcription.processed_text.slice(0, 100) + (transcription.processed_text.length > 100 ? '...' : '')}
+                </p>
+              </div>
+            )}
+
+            {!isExpanded && (transcription.original_text.length > 100 || (transcription.processed_text && transcription.processed_text.length > 100)) && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -270,7 +299,7 @@ export const TranscriptionItem = ({
                 קרא עוד...
               </Button>
             )}
-          </div>
+          </>
         )}
       </div>
 
