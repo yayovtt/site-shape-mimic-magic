@@ -53,7 +53,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     console.log("AuthProvider: Attempting sign in");
-    setLoading(true);
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -66,14 +65,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       console.error("AuthProvider: Sign in error", err);
       return { error: err };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string) => {
     console.log("AuthProvider: Attempting sign up");
-    setLoading(true);
     
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -89,22 +85,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       console.error("AuthProvider: Sign up error", err);
       return { error: err };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signOut = async () => {
     console.log("AuthProvider: Signing out");
-    setLoading(true);
     
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     } catch (err) {
       console.error("AuthProvider: Sign out error", err);
-    } finally {
-      setLoading(false);
     }
   };
 
