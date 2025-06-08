@@ -12,7 +12,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -84,6 +84,31 @@ const Auth = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const { error } = await signInWithGoogle();
+      
+      if (error) {
+        console.error("Google sign in error:", error);
+        toast({
+          title: "שגיאה",
+          description: "שגיאה בכניסה עם Google",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Google sign in error:", error);
+      toast({
+        title: "שגיאה",
+        description: "משהו השתבש בכניסה עם Google",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center p-6" dir="rtl">
       <Card className="w-full max-w-md">
@@ -133,6 +158,30 @@ const Auth = () => {
               {loading ? "מעבד..." : (isLogin ? "התחבר" : "הירשם")}
             </Button>
           </form>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">או</span>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleGoogleSignIn}
+            variant="outline"
+            className="w-full"
+            disabled={loading}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-5 h-5 bg-blue-500 text-white rounded-sm flex items-center justify-center text-sm font-bold">
+                G
+              </div>
+              כניסה עם Google
+            </div>
+          </Button>
+
           <div className="text-center mt-4">
             <Button
               variant="link"
