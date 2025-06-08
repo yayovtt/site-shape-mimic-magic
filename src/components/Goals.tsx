@@ -62,13 +62,23 @@ export const Goals = () => {
     if (!newGoal.title.trim()) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "שגיאה: משתמש לא מחובר",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from("goals")
         .insert({
           title: newGoal.title,
           description: newGoal.description,
           target_date: selectedDate?.toISOString().split('T')[0],
-          completed: false
+          completed: false,
+          user_id: user.id
         });
 
       if (error) throw error;

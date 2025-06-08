@@ -65,6 +65,15 @@ export const Meetings = () => {
     if (!newMeeting.title.trim() || !selectedDate) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "שגיאה: משתמש לא מחובר",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const meetingDateTime = new Date(selectedDate);
       const [hours, minutes] = selectedTime.split(':');
       meetingDateTime.setHours(parseInt(hours), parseInt(minutes));
@@ -75,7 +84,8 @@ export const Meetings = () => {
           title: newMeeting.title,
           description: newMeeting.description,
           meeting_date: meetingDateTime.toISOString(),
-          duration: newMeeting.duration
+          duration: newMeeting.duration,
+          user_id: user.id
         });
 
       if (error) throw error;
