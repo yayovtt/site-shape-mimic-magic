@@ -28,8 +28,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("AuthProvider: Setting up auth state listener");
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("AuthProvider: Auth state changed", { event, session: !!session });
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -37,6 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("AuthProvider: Initial session check", { session: !!session });
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -46,14 +50,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    console.log("AuthProvider: Attempting sign in");
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    console.log("AuthProvider: Sign in result", { error });
     return { error };
   };
 
   const signUp = async (email: string, password: string) => {
+    console.log("AuthProvider: Attempting sign up");
     const redirectUrl = `${window.location.origin}/`;
     const { error } = await supabase.auth.signUp({
       email,
@@ -62,10 +69,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         emailRedirectTo: redirectUrl
       }
     });
+    console.log("AuthProvider: Sign up result", { error });
     return { error };
   };
 
   const signOut = async () => {
+    console.log("AuthProvider: Signing out");
     await supabase.auth.signOut();
   };
 
@@ -77,6 +86,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signUp,
     signOut,
   };
+
+  console.log("AuthProvider: Current state", { user: !!user, session: !!session, loading });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

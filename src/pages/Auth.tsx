@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,18 +19,24 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    console.log("Starting authentication process:", { isLogin, email });
+
     try {
       const { error } = isLogin 
         ? await signIn(email, password)
         : await signUp(email, password);
 
+      console.log("Authentication result:", { error });
+
       if (error) {
+        console.error("Authentication error:", error);
         toast({
           title: "שגיאה",
           description: error.message,
           variant: "destructive",
         });
       } else {
+        console.log("Authentication successful, navigating to home");
         toast({
           title: isLogin ? "התחברת בהצלחה" : "נרשמת בהצלחה",
           description: isLogin ? "ברוך הבא!" : "ברוך הבא למערכת!",
@@ -39,6 +44,7 @@ const Auth = () => {
         navigate("/");
       }
     } catch (error) {
+      console.error("Authentication catch error:", error);
       toast({
         title: "שגיאה",
         description: "משהו השתבש. נסה שוב.",
