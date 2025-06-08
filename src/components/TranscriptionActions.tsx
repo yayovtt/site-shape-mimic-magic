@@ -8,6 +8,7 @@ import {
   FolderDown,
   ChevronDown,
   ChevronUp,
+  X,
 } from "lucide-react";
 import { downloadText, saveToFolder, shareWhatsApp, openChatGPT, copyToClipboard } from "@/utils/fileOperations";
 
@@ -32,13 +33,15 @@ interface TranscriptionActionsProps {
   textToShow: string;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  onDelete?: () => void;
 }
 
 export const TranscriptionActions = ({ 
   transcription, 
   textToShow, 
   isExpanded, 
-  onToggleExpand 
+  onToggleExpand,
+  onDelete 
 }: TranscriptionActionsProps) => {
   const { toast } = useToast();
 
@@ -81,6 +84,16 @@ export const TranscriptionActions = ({
     openChatGPT(textToShow);
   };
 
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete();
+      toast({
+        title: "נמחק בהצלחה",
+        description: "התמלול נמחק מההיסטוריה",
+      });
+    }
+  };
+
   return (
     <div className="flex items-center gap-1">
       <Button
@@ -117,6 +130,7 @@ export const TranscriptionActions = ({
         variant="ghost"
         onClick={handleCopy}
         className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 p-2 h-8 w-8"
+        title="העתק ללוח"
       >
         <Copy className="w-4 h-4" />
       </Button>
@@ -125,14 +139,27 @@ export const TranscriptionActions = ({
         variant="ghost"
         onClick={handleDownload}
         className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 p-2 h-8 w-8"
+        title="הורד קובץ"
       >
         <Download className="w-4 h-4" />
       </Button>
+      {onDelete && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={handleDelete}
+          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 h-8 w-8"
+          title="מחק תמלול"
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      )}
       <Button
         size="sm"
         variant="ghost"
         onClick={onToggleExpand}
         className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 p-2 h-8 w-8"
+        title={isExpanded ? "כווץ" : "הרחב"}
       >
         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
       </Button>

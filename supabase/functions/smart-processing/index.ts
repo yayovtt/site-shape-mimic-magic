@@ -21,7 +21,7 @@ serve(async (req) => {
     console.log('Received request:', { 
       textLength: text?.length, 
       engine, 
-      categories,
+      categories: Array.isArray(categories) ? categories : [categories],
       hasCustomPrompt: !!customPrompt 
     });
     
@@ -29,7 +29,8 @@ serve(async (req) => {
       throw new Error('Missing required parameters: text and engine');
     }
 
-    const categoryString = Array.isArray(categories) ? categories.join(', ') : categories || '';
+    // Convert categories to string for processing
+    const categoryString = Array.isArray(categories) ? categories.join(', ') : (categories || '');
     console.log(`Processing with ${engine} for categories: ${categoryString}`);
 
     let processedText = '';
@@ -145,7 +146,7 @@ function getSystemPrompt(categories: string): string {
     return 'אתה עוזר AI מומחה בעיבוד טקסטים בעברית. תפקידך לשפר ולארגן את הטקסט הנתון בצורה ברורה ומועילה. הציג את התוצאה בעברית בפורמט ברור ומסודר.';
   }
 
-  const categoryPrompts = {
+  const categoryPrompts: Record<string, string> = {
     'סיכום': 'אתה עוזר AI מומחה בסיכום טקסטים בעברית. תפקידך לסכם את הטקסט הנתון בצורה ברורה ותמציתית, תוך שמירה על הנקודות החשובות והמידע המרכזי. הסיכום יהיה בעברית ויכלול את העיקרים בלבד.',
     'פעולות נדרשות': 'אתה עוזר AI מומחה בזיהוי משימות ופעולות. תפקידך לחלץ מהטקסט את כל המשימות, הפעולות והדברים שצריך לעשות. ארגן אותם ברשימה ברורה ומסודרת בעברית.',
     'נקודות עיקריות': 'אתה עוזר AI מומחה בזיהוי נקודות מפתח. תפקידך לחלץ ולהדגיש את הנקודות החשובות והמרכזיות ביותר מהטקסט. הציג אותם בצורה מסודרת בעברית.',
