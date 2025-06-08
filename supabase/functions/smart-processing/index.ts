@@ -10,6 +10,28 @@ const corsHeaders = {
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const CLAUDE_API_KEY = Deno.env.get('CLAUDE_API_KEY');
 
+// Function to split text into chunks
+function splitTextIntoChunks(text: string, maxChunkSize: number = 3000): string[] {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const chunks: string[] = [];
+  let currentChunk = '';
+
+  for (const sentence of sentences) {
+    if ((currentChunk + sentence).length > maxChunkSize && currentChunk.length > 0) {
+      chunks.push(currentChunk.trim());
+      currentChunk = sentence.trim();
+    } else {
+      currentChunk += (currentChunk ? '. ' : '') + sentence.trim();
+    }
+  }
+  
+  if (currentChunk.trim().length > 0) {
+    chunks.push(currentChunk.trim());
+  }
+  
+  return chunks.length > 0 ? chunks : [text];
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -92,57 +114,84 @@ serve(async (req) => {
       console.log('Claude API key found, proceeding with request');
       console.log('Using custom prompt for Claude');
 
-      const requestBody = {
-        model: 'claude-3-5-haiku-20241022',
-        max_tokens: 8192,
-        system: customPrompt.trim(),
-        messages: [
-          {
-            role: 'user',
-            content: text
+      // Split text into chunks if it's long
+      const textChunks = splitTextIntoChunks(text, 3000);
+      console.log(`Split text into ${textChunks.length} chunks`);
+      
+      const processedChunks: string[] = [];
+
+      for (let i = 0; i < textChunks.length; i++) {
+        const chunk = textChunks[i];
+        console.log(`Processing chunk ${i + 1}/${textChunks.length}, length: ${chunk.length}`);
+
+        let chunkPrompt = customPrompt.trim();
+        if (textChunks.length > 1) {
+          chunkPrompt += `\n\nזהו חלק ${i + 1} מתוך ${textChunks.length} חלקים של הטקסט המלא. עבד את החלק הזה בהתאם להוראות שלמעלה.`;
+        }
+
+        const requestBody = {
+          model: 'claude-3-5-haiku-20241022',
+          max_tokens: 4000,
+          system: chunkPrompt,
+          messages: [
+            {
+              role: 'user',
+              content: chunk
+            }
+          ]
+        };
+
+        console.log(`Sending request to Claude API for chunk ${i + 1}`);
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${CLAUDE_API_KEY}`,
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01',
+            'x-api-key': CLAUDE_API_KEY,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        console.log(`Claude API response status for chunk ${i + 1}:`, response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Claude API error response for chunk ${i + 1}:`, errorText);
+          
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { error: { message: errorText } };
           }
-        ]
-      };
-
-      console.log('Sending request to Claude API with model:', requestBody.model);
-
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${CLAUDE_API_KEY}`,
-          'Content-Type': 'application/json',
-          'anthropic-version': '2023-06-01',
-          'x-api-key': CLAUDE_API_KEY,
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      console.log('Claude API response status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Claude API error response:', errorText);
-        
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = { error: { message: errorText } };
+          
+          if (response.status === 401) {
+            throw new Error('מפתח Claude API אינו תקף. אנא בדוק שהמפתח נכון ופעיל ומתחיל ב-sk-ant-api03-');
+          } else if (response.status === 429) {
+            throw new Error('חריגה מהמכסה של Claude API. אנא נסה שוב מאוחר יותר.');
+          } else {
+            throw new Error(`שגיאה ב-Claude API בחלק ${i + 1}: ${response.status} - ${errorData.error?.message || errorText || 'שגיאה לא ידועה'}`);
+          }
         }
-        
-        if (response.status === 401) {
-          throw new Error('מפתח Claude API אינו תקף. אנא בדוק שהמפתח נכון ופעיל ומתחיל ב-sk-ant-api03-');
-        } else if (response.status === 429) {
-          throw new Error('חריגה מהמכסה של Claude API. אנא נסה שוב מאוחר יותר.');
-        } else {
-          throw new Error(`שגיאה ב-Claude API: ${response.status} - ${errorData.error?.message || errorText || 'שגיאה לא ידועה'}`);
-        }
+
+        const result = await response.json();
+        console.log(`Claude API response received for chunk ${i + 1}, parsing content...`);
+        const chunkResult = result.content?.[0]?.text || '';
+        processedChunks.push(chunkResult);
+        console.log(`Chunk ${i + 1} processing completed, text length:`, chunkResult.length);
       }
 
-      const result = await response.json();
-      console.log('Claude API response received, parsing content...');
-      processedText = result.content?.[0]?.text || '';
-      console.log('Claude processing completed successfully, text length:', processedText.length);
+      // Combine all processed chunks
+      if (textChunks.length > 1) {
+        processedText = processedChunks.join('\n\n');
+        console.log(`Combined ${processedChunks.length} processed chunks, total length:`, processedText.length);
+      } else {
+        processedText = processedChunks[0] || '';
+      }
+      
+      console.log('Claude processing completed successfully');
     } else {
       throw new Error('Invalid engine specified. Must be "chatgpt" or "claude"');
     }
