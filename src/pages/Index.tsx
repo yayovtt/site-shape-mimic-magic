@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { MediaUploader } from "@/components/MediaUploader";
+import { QuickStats } from "@/components/QuickStats";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -110,6 +111,9 @@ const Index = () => {
             התנתק
           </Button>
         </div>
+
+        {/* Quick Stats Section */}
+        <QuickStats onNavigate={navigate} />
 
         {/* Voice Recorder Section */}
         <Card className="mb-8" dir="rtl">
