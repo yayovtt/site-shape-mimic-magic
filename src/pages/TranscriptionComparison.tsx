@@ -13,7 +13,8 @@ import {
   Clock,
   FileText,
   Copy,
-  Download
+  Download,
+  AlertCircle
 } from "lucide-react";
 import { copyToClipboard, downloadText } from "@/utils/fileOperations";
 
@@ -48,7 +49,6 @@ const TranscriptionComparison = () => {
       const { data, error } = await supabase
         .from('transcriptions')
         .select('*')
-        .not('processed_text', 'is', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -74,8 +74,11 @@ const TranscriptionComparison = () => {
     });
   };
 
-  const handleDownload = (original: string, processed: string, filename?: string) => {
-    const combinedText = `תמלול מקורי:\n${original}\n\n${'='.repeat(50)}\n\nעיבוד חכם:\n${processed}`;
+  const handleDownload = (original: string, processed: string | undefined, filename?: string) => {
+    const combinedText = processed 
+      ? `תמלול מקורי:\n${original}\n\n${'='.repeat(50)}\n\nעיבוד חכם:\n${processed}`
+      : `תמלול מקורי:\n${original}`;
+    
     downloadText(
       combinedText, 
       `השוואה_${filename || new Date().toLocaleDateString('he-IL')}.txt`
@@ -126,8 +129,8 @@ const TranscriptionComparison = () => {
               <div className="bg-gray-200 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">אין תמלולים מעובדים</h3>
-              <p className="text-gray-500">עבד תמלולים עם Claude או ChatGPT כדי לראות השוואות כאן</p>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">אין תמלולים</h3>
+              <p className="text-gray-500">צור תמלולים כדי לראות אותם כאן</p>
             </CardContent>
           </Card>
         ) : (
@@ -140,9 +143,16 @@ const TranscriptionComparison = () => {
                       <CardTitle className="text-lg">
                         {transcription.filename || 'תמלול ללא שם'}
                       </CardTitle>
-                      <Badge className="bg-purple-100 text-purple-800">
-                        {transcription.processing_engine === 'chatgpt' ? 'ChatGPT' : 'Claude'}
-                      </Badge>
+                      {transcription.processing_engine ? (
+                        <Badge className="bg-purple-100 text-purple-800">
+                          {transcription.processing_engine === 'chatgpt' ? 'ChatGPT' : 'Claude'}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+                          <AlertCircle className="w-3 h-3 ml-1" />
+                          ללא עיבוד חכם
+                        </Badge>
+                      )}
                       {transcription.processing_category && (
                         <Badge variant="outline" className="text-xs">
                           {transcription.processing_category}
@@ -158,7 +168,7 @@ const TranscriptionComparison = () => {
                 </CardHeader>
                 
                 <CardContent className="p-0">
-                  <div className="grid md:grid-cols-2 gap-0">
+                  <div className={`grid ${transcription.processed_text ? 'md:grid-cols-2' : 'grid-cols-1'} gap-0`}>
                     {/* Original Text */}
                     <div className="p-6 border-l border-gray-200">
                       <div className="flex items-center justify-between mb-4">
@@ -182,38 +192,48 @@ const TranscriptionComparison = () => {
                       </div>
                     </div>
 
-                    {/* Processed Text */}
-                    <div className="p-6 bg-gradient-to-br from-purple-50 to-green-50">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-5 h-5 text-purple-500" />
-                          <h3 className="text-lg font-semibold text-purple-700">עיבוד חכם</h3>
+                    {/* Processed Text or Empty State */}
+                    {transcription.processed_text ? (
+                      <div className="p-6 bg-gradient-to-br from-purple-50 to-green-50">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-purple-500" />
+                            <h3 className="text-lg font-semibold text-purple-700">עיבוד חכם</h3>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCopy(transcription.processed_text!, 'העיבוד החכם')}
+                            className="p-2 h-8 w-8"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCopy(transcription.processed_text!, 'העיבוד החכם')}
-                          className="p-2 h-8 w-8"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
+                        <div className="bg-gradient-to-br from-purple-100 to-green-100 p-4 rounded-lg border border-purple-200">
+                          <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed text-right">
+                            {transcription.processed_text}
+                          </p>
+                        </div>
                       </div>
-                      <div className="bg-gradient-to-br from-purple-100 to-green-100 p-4 rounded-lg border border-purple-200">
-                        <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed text-right">
-                          {transcription.processed_text}
-                        </p>
+                    ) : (
+                      <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                        <div className="text-center">
+                          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                          <h3 className="text-lg font-semibold text-gray-600 mb-2">אין עיבוד חכם</h3>
+                          <p className="text-gray-500 text-sm">התמלול עדיין לא עובד עם AI</p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                   
                   {/* Download Button */}
                   <div className="p-4 bg-gray-50 border-t">
                     <Button
-                      onClick={() => handleDownload(transcription.original_text, transcription.processed_text!, transcription.filename)}
+                      onClick={() => handleDownload(transcription.original_text, transcription.processed_text, transcription.filename)}
                       className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
                     >
                       <Download className="w-4 h-4 ml-2" />
-                      הורד השוואה מלאה
+                      {transcription.processed_text ? 'הורד השוואה מלאה' : 'הורד תמלול מקורי'}
                     </Button>
                   </div>
                 </CardContent>
