@@ -65,6 +65,13 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
         PROCESSING_CATEGORIES.find(cat => cat.id === id)?.label
       ).filter(Boolean);
 
+      console.log('Sending request with:', {
+        text: originalText.substring(0, 100) + '...',
+        engine: selectedEngine,
+        categories,
+        customPrompt: customPrompt.trim() || undefined
+      });
+
       const { data, error } = await supabase.functions.invoke('smart-processing', {
         body: {
           text: originalText,
@@ -74,13 +81,23 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
         }
       });
 
-      if (error) throw error;
+      console.log('Response received:', { data, error });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
 
       if (data?.processedText) {
         onProcessingComplete(transcriptionId, data.processedText, {
           engine: selectedEngine,
           category: categories.join(', '),
           customPrompt: customPrompt.trim() || undefined
+        });
+
+        toast({
+          title: "עיבוד חכם הושלם!",
+          description: `הטקסט עובד בהצלחה עם ${selectedEngine === 'chatgpt' ? 'ChatGPT' : 'Claude'}`,
         });
       } else {
         throw new Error('לא התקבל טקסט מעובד');

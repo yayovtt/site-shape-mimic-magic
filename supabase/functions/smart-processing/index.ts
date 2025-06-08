@@ -1,7 +1,6 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,13 +16,21 @@ serve(async (req) => {
   }
 
   try {
-    const { text, engine, category, customPrompt } = await req.json();
+    const { text, engine, categories, customPrompt } = await req.json();
+    
+    console.log('Received request:', { 
+      textLength: text?.length, 
+      engine, 
+      categories,
+      hasCustomPrompt: !!customPrompt 
+    });
     
     if (!text || !engine) {
-      throw new Error('Missing required parameters');
+      throw new Error('Missing required parameters: text and engine');
     }
 
-    console.log(`Processing with ${engine} for category: ${category}`);
+    const categoryString = Array.isArray(categories) ? categories.join(', ') : categories || '';
+    console.log(`Processing with ${engine} for categories: ${categoryString}`);
 
     let processedText = '';
     
@@ -31,6 +38,9 @@ serve(async (req) => {
       if (!OPENAI_API_KEY) {
         throw new Error('OpenAI API key not configured');
       }
+
+      const systemPrompt = customPrompt || getSystemPrompt(categoryString);
+      console.log('Using system prompt for ChatGPT');
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -43,7 +53,7 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: customPrompt || getSystemPrompt(category)
+              content: systemPrompt
             },
             {
               role: 'user',
@@ -63,11 +73,15 @@ serve(async (req) => {
 
       const result = await response.json();
       processedText = result.choices[0]?.message?.content || '';
+      console.log('ChatGPT processing completed successfully');
       
     } else if (engine === 'claude') {
       if (!CLAUDE_API_KEY) {
         throw new Error('Claude API key not configured');
       }
+
+      const systemPrompt = customPrompt || getSystemPrompt(categoryString);
+      console.log('Using system prompt for Claude');
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -79,7 +93,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: 'claude-3-5-haiku-20241022',
           max_tokens: 4000,
-          system: customPrompt || getSystemPrompt(category),
+          system: systemPrompt,
           messages: [
             {
               role: 'user',
@@ -97,10 +111,16 @@ serve(async (req) => {
 
       const result = await response.json();
       processedText = result.content[0]?.text || '';
+      console.log('Claude processing completed successfully');
     } else {
-      throw new Error('Invalid engine specified');
+      throw new Error('Invalid engine specified. Must be "chatgpt" or "claude"');
     }
 
+    if (!processedText) {
+      throw new Error('No processed text received from AI service');
+    }
+
+    console.log('Processing completed, returning result');
     return new Response(
       JSON.stringify({ processedText }),
       {
@@ -120,15 +140,32 @@ serve(async (req) => {
   }
 });
 
-function getSystemPrompt(category: string): string {
-  const prompts = {
-    'summary': 'אתה עוזר AI מומחה בסיכום טקסטים בעברית. תפקידך לסכם את הטקסט הנתון בצורה ברורה ותמציתית, תוך שמירה על הנקודות החשובות והמידע המרכזי. הסיכום יהיה בעברית ויכלול את העיקרים בלבד.',
-    'meeting': 'אתה עוזר AI מומחה בעיבוד פרוטוקולי פגישות. תפקידך לארגן את תוכן הפגישה בצורה מובנית: נושאים עיקריים, החלטות שהתקבלו, משימות לביצוע, ומשתתפים. הציג את התוצאה בעברית בפורמט ברור ומסודר.',
-    'lecture': 'אתה עוזר AI מומחה בעיבוד תוכן לימודי והרצאות. תפקידך לארגן את תוכן ההרצאה לנקודות עיקריות, מושגי מפתח, ודוגמאות חשובות. הציג את התוכן בצורה מסודרת וקלה ללמידה בעברית.',
-    'interview': 'אתה עוזר AI מומחה בעיבוד ראיונות. תפקידך לארגן את הראיון לתשובות מובנות לפי נושאים, להדגיש נקודות מעניינות וחשובות, ולסכם את העיקרים. הציג בעברית בפורמט ברור.',
-    'creative': 'אתה עוזר AI יצירתי. תפקידך לקחת את הטקסט ולשפר אותו מבחינה יצירתית - לשפר את הניסוח, להוסיף אלמנטים ספרותיים, ולהפוך אותו למעניין ומושך יותר. שמור על התוכן המקורי אך הפוך אותו ליצירתי יותר בעברית.',
-    'grammar': 'אתה עוזר AI מומחה בתיקון דקדוק ועריכה בעברית. תפקידך לתקן שגיאות דקדוק, איות וסגנון, לשפר את הזרימה והבהירות של הטקסט. החזר את הטקסט המתוקן בעברית תקנית וברורה.'
+function getSystemPrompt(categories: string): string {
+  if (!categories) {
+    return 'אתה עוזר AI מומחה בעיבוד טקסטים בעברית. תפקידך לשפר ולארגן את הטקסט הנתון בצורה ברורה ומועילה. הציג את התוצאה בעברית בפורמט ברור ומסודר.';
+  }
+
+  const categoryPrompts = {
+    'סיכום': 'אתה עוזר AI מומחה בסיכום טקסטים בעברית. תפקידך לסכם את הטקסט הנתון בצורה ברורה ותמציתית, תוך שמירה על הנקודות החשובות והמידע המרכזי. הסיכום יהיה בעברית ויכלול את העיקרים בלבד.',
+    'פעולות נדרשות': 'אתה עוזר AI מומחה בזיהוי משימות ופעולות. תפקידך לחלץ מהטקסט את כל המשימות, הפעולות והדברים שצריך לעשות. ארגן אותם ברשימה ברורה ומסודרת בעברית.',
+    'נקודות עיקריות': 'אתה עוזר AI מומחה בזיהוי נקודות מפתח. תפקידך לחלץ ולהדגיש את הנקודות החשובות והמרכזיות ביותר מהטקסט. הציג אותם בצורה מסודרת בעברית.',
+    'שאלות ותשובות': 'אתה עוזר AI מומחה בזיהוי שאלות ותשובות. תפקידך לחלץ מהטקסט שאלות שנשאלו ותשובות שניתנו, או ליצור שאלות רלוונטיות על סמך התוכן. הציג בפורמט שאלה-תשובה בעברית.',
+    'החלטות': 'אתה עוזר AI מומחה בזיהוי החלטות. תפקידך לחלץ מהטקסט את כל החלטות שהתקבלו, הסכמות שהושגו והמסקנות. ארגן אותם ברשימה ברורה בעברית.',
+    'עיצוב וארגון': 'אתה עוזר AI מומחה בעיצוב וארגון טקסט. תפקידך לארגן את הטקסט עם כותרות, תת-כותרות, רשימות ופסקאות מסודרות. שפר את הקריאות והבהירות בעברית.',
+    'תוספת מקורות': 'אתה עוזר AI מומחה בהוספת מקורות ומידע נוסף. תפקידך להציע מקורות רלוונטיים, קישורים לקריאה נוספת והפניות שיכולות להעשיר את התוכן. הוסף הצעות למקורות אמינים בעברית.',
+    'תיקון שגיאות כתיב ועריכה לשונית': 'אתה עוזר AI מומחה בתיקון דקדוק ועריכה בעברית. תפקידך לתקן שגיאות כתיב, דקדוק ואיות, לשפר את הניסוח והזרימה של הטקסט. החזר טקסט מתוקן ומעורך בעברית תקנית וברורה.'
   };
+
+  // Create a combined prompt based on selected categories
+  const selectedPrompts = categories.split(', ').map(category => 
+    categoryPrompts[category.trim()] || categoryPrompts['סיכום']
+  );
+
+  if (selectedPrompts.length === 1) {
+    return selectedPrompts[0];
+  }
+
+  return `אתה עוזר AI מומחה בעיבוד טקסטים בעברית. תפקידך לעבד את הטקסט הנתון על פי הקטגוריות הבאות: ${categories}. 
   
-  return prompts[category] || prompts['summary'];
+עבור כל קטגוריה, בצע את המשימה המתאימה והציג את התוצאות בפורמט ברור ומסודר בעברית. אם יש מספר קטגוריות, ארגן את התוצאה עם כותרות נפרדות לכל קטגוריה.`;
 }
