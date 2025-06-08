@@ -268,212 +268,215 @@ export const TranscriptionManager = () => {
   }
 
   return (
-    <div className="space-y-6" dir="rtl">
-      <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-purple-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-purple-700">
-            <FileText className="w-6 h-6" />
-            מרכז תמלול וניהול טקסטים מתקדם
+    <div className="space-y-8 p-6" dir="rtl">
+      {/* Main Header */}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">מרכז תמלול וניהול טקסטים מתקדם</h1>
+        <p className="text-gray-600">הקלטה, תמלול ועיבוד חכם של תוכן אודיו ווידאו</p>
+      </div>
+
+      {/* Action Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Voice Recording Card */}
+        <div className="bg-gradient-to-br from-pink-400 to-pink-500 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-white bg-opacity-20 rounded-xl p-3">
+              <Mic className="w-6 h-6" />
+            </div>
+            <h3 className="font-semibold text-xl">הקלטת קול מהירה</h3>
+          </div>
+          <p className="text-pink-100 mb-4 text-sm">הקלט ותמלל ישירות מהמיקרופון</p>
+          <div className="bg-white bg-opacity-10 rounded-xl p-4 backdrop-blur-sm">
+            <VoiceRecorder onTranscription={handleVoiceTranscription} />
+          </div>
+        </div>
+
+        {/* File Upload Card */}
+        <div className="bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-white bg-opacity-20 rounded-xl p-3">
+              <Upload className="w-6 h-6" />
+            </div>
+            <h3 className="font-semibold text-xl">העלאת קבצי אודיו ווידאו</h3>
+          </div>
+          <p className="text-emerald-100 mb-4 text-sm">תמלול מתקדם לקבצים גדולים</p>
+          <div className="bg-white bg-opacity-10 rounded-xl p-4 backdrop-blur-sm">
+            <EnhancedMediaUploader onTranscription={handleFileTranscription} />
+          </div>
+        </div>
+      </div>
+
+      {/* Transcriptions History */}
+      <Card className="border-0 shadow-lg rounded-2xl overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="bg-white bg-opacity-20 rounded-xl p-2">
+              <FileText className="w-6 h-6" />
+            </div>
+            היסטוריית תמלולים ({transcriptions.length})
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Voice Recording Section */}
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl p-6 shadow-lg">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-white bg-opacity-20 rounded-full p-2">
-                <Mic className="w-6 h-6" />
+        
+        <CardContent className="p-6">
+          {transcriptions.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-10 h-10 text-gray-400" />
               </div>
-              <h3 className="font-bold text-xl">הקלטת קול מהירה</h3>
+              <p className="text-gray-600 text-lg font-medium mb-2">עדיין לא בוצעו תמלולים</p>
+              <p className="text-gray-400">השתמש בהקלטה או העלה קובץ כדי להתחיל</p>
             </div>
-            <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <VoiceRecorder onTranscription={handleVoiceTranscription} />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Enhanced File Upload Section */}
-          <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-xl p-6 shadow-lg">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-white bg-opacity-20 rounded-full p-2">
-                <Upload className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold text-xl">העלאה ותמלול מתקדם</h3>
-            </div>
-            <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <EnhancedMediaUploader onTranscription={handleFileTranscription} />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Transcriptions History */}
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl p-6 shadow-lg">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-white bg-opacity-20 rounded-full p-2">
-                <FileText className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold text-xl">היסטוריית תמלולים ({transcriptions.length})</h3>
-            </div>
-            
-            {transcriptions.length === 0 ? (
-              <div className="text-center py-8 bg-white bg-opacity-10 rounded-lg">
-                <FileText className="w-12 h-12 mx-auto mb-4 text-white opacity-60" />
-                <p className="text-white opacity-80">עדיין לא בוצעו תמלולים</p>
-                <p className="text-sm mt-2 text-white opacity-60">השתמש בהקלטה או העלה קובץ כדי להתחיל</p>
-              </div>
-            ) : (
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {transcriptions.map((transcription) => (
-                  <Card key={transcription.id} className="border border-white border-opacity-30 bg-white bg-opacity-10 backdrop-blur-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant={transcription.metadata?.source === 'voice' ? 'default' : 'secondary'} className="bg-white bg-opacity-20 text-white border-white border-opacity-30">
-                            {transcription.metadata?.source === 'voice' ? (
-                              <><Mic className="w-3 h-3 mr-1" /> הקלטה</>
-                            ) : (
-                              <><Upload className="w-3 h-3 mr-1" /> קובץ</>
-                            )}
-                          </Badge>
-                          {transcription.filename && (
-                            <span className="text-xs text-white opacity-70">{transcription.filename}</span>
-                          )}
-                          {transcription.file_size_mb && (
-                            <span className="text-xs text-white opacity-60">
-                              {transcription.file_size_mb.toFixed(1)} MB
-                            </span>
-                          )}
-                          {transcription.processing_engine && (
-                            <Badge variant="outline" className="text-xs bg-white bg-opacity-20 text-white border-white border-opacity-30">
-                              <Sparkles className="w-3 h-3 mr-1" />
-                              {transcription.processing_engine === 'chatgpt' ? 'ChatGPT' : 'Claude'}
-                            </Badge>
-                          )}
-                          {transcription.processing_category && (
-                            <Badge variant="outline" className="text-xs bg-white bg-opacity-20 text-white border-white border-opacity-30">
-                              {transcription.processing_category}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {editingId === transcription.id ? (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={saveEdit}
-                                className="text-green-200 hover:text-green-100 hover:bg-white hover:bg-opacity-20"
-                              >
-                                <Save className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={cancelEdit}
-                                className="text-red-200 hover:text-red-100 hover:bg-white hover:bg-opacity-20"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </>
+          ) : (
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {transcriptions.map((transcription) => (
+                <Card key={transcription.id} className="border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={transcription.metadata?.source === 'voice' ? 'default' : 'secondary'} className="rounded-lg">
+                          {transcription.metadata?.source === 'voice' ? (
+                            <><Mic className="w-3 h-3 mr-1" /> הקלטה</>
                           ) : (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => startEdit(transcription)}
-                                className="text-blue-200 hover:text-blue-100 hover:bg-white hover:bg-opacity-20"
-                              >
-                                <Edit3 className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => copyToClipboard(transcription.processed_text || transcription.original_text)}
-                                className="text-gray-200 hover:text-gray-100 hover:bg-white hover:bg-opacity-20"
-                              >
-                                <Copy className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => downloadText(
-                                  transcription.processed_text || transcription.original_text, 
-                                  `תמלול_${new Date(transcription.created_at).toLocaleDateString('he-IL')}.txt`
-                                )}
-                                className="text-purple-200 hover:text-purple-100 hover:bg-white hover:bg-opacity-20"
-                              >
-                                <Download className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => deleteTranscription(transcription.id)}
-                                className="text-red-200 hover:text-red-100 hover:bg-white hover:bg-opacity-20"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </>
+                            <><Upload className="w-3 h-3 mr-1" /> קובץ</>
                           )}
-                        </div>
-                      </div>
-                      
-                      {editingId === transcription.id ? (
-                        <Textarea
-                          value={editText}
-                          onChange={(e) => setEditText(e.target.value)}
-                          className="min-h-24 resize-y bg-white bg-opacity-20 border-white border-opacity-30 text-white placeholder-white placeholder-opacity-60"
-                          placeholder="ערוך את הטקסט כאן..."
-                        />
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="bg-white bg-opacity-15 border border-white border-opacity-20 rounded-lg p-3">
-                            <div className="text-xs text-white opacity-70 mb-2 font-medium">טקסט מקורי:</div>
-                            <p className="whitespace-pre-wrap text-sm leading-relaxed text-white">
-                              {transcription.original_text}
-                            </p>
-                          </div>
-                          
-                          {transcription.processed_text && (
-                            <div className="bg-white bg-opacity-15 border border-white border-opacity-20 rounded-lg p-3">
-                              <div className="text-xs text-white opacity-70 mb-2 font-medium flex items-center gap-1">
-                                <Sparkles className="w-3 h-3" />
-                                טקסט מעובד:
-                              </div>
-                              <p className="whitespace-pre-wrap text-sm leading-relaxed text-white">
-                                {transcription.processed_text}
-                              </p>
-                            </div>
-                          )}
-                          
-                          {!transcription.processed_text && (
-                            <div className="mt-4">
-                              <SmartProcessor
-                                transcriptionId={transcription.id}
-                                originalText={transcription.original_text}
-                                onProcessingComplete={handleSmartProcessing}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      
-                      <div className="text-xs text-white opacity-60 mt-2 flex items-center gap-2">
-                        <Clock className="w-3 h-3" />
-                        {new Date(transcription.created_at).toLocaleString('he-IL')}
-                        {transcription.transcription_model && (
-                          <span className="text-white opacity-50">
-                            • {transcription.transcription_model}
-                            {transcription.language && ` • ${transcription.language}`}
+                        </Badge>
+                        {transcription.filename && (
+                          <span className="text-xs text-gray-500">{transcription.filename}</span>
+                        )}
+                        {transcription.file_size_mb && (
+                          <span className="text-xs text-gray-400">
+                            {transcription.file_size_mb.toFixed(1)} MB
                           </span>
                         )}
+                        {transcription.processing_engine && (
+                          <Badge variant="outline" className="text-xs rounded-lg">
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            {transcription.processing_engine === 'chatgpt' ? 'ChatGPT' : 'Claude'}
+                          </Badge>
+                        )}
+                        {transcription.processing_category && (
+                          <Badge variant="outline" className="text-xs rounded-lg">
+                            {transcription.processing_category}
+                          </Badge>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+                      <div className="flex items-center gap-1">
+                        {editingId === transcription.id ? (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={saveEdit}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            >
+                              <Save className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={cancelEdit}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => startEdit(transcription)}
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => copyToClipboard(transcription.processed_text || transcription.original_text)}
+                              className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => downloadText(
+                                transcription.processed_text || transcription.original_text, 
+                                `תמלול_${new Date(transcription.created_at).toLocaleDateString('he-IL')}.txt`
+                              )}
+                              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => deleteTranscription(transcription.id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {editingId === transcription.id ? (
+                      <Textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className="min-h-24 resize-y border-gray-200 focus:border-blue-400 rounded-xl"
+                        placeholder="ערוך את הטקסט כאן..."
+                      />
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
+                          <div className="text-xs text-gray-600 mb-2 font-medium">טקסט מקורי:</div>
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
+                            {transcription.original_text}
+                          </p>
+                        </div>
+                        
+                        {transcription.processed_text && (
+                          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                            <div className="text-xs text-blue-700 mb-2 font-medium flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" />
+                              טקסט מעובד:
+                            </div>
+                            <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
+                              {transcription.processed_text}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {!transcription.processed_text && (
+                          <div className="mt-4">
+                            <SmartProcessor
+                              transcriptionId={transcription.id}
+                              originalText={transcription.original_text}
+                              onProcessingComplete={handleSmartProcessing}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="text-xs text-gray-500 mt-3 flex items-center gap-2">
+                      <Clock className="w-3 h-3" />
+                      {new Date(transcription.created_at).toLocaleString('he-IL')}
+                      {transcription.transcription_model && (
+                        <span className="text-gray-400">
+                          • {transcription.transcription_model}
+                          {transcription.language && ` • ${transcription.language}`}
+                        </span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
