@@ -92,16 +92,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50" dir="rtl">
       <div className="container mx-auto px-4 py-8">
         {/* Header with navigation */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              מרכז תמלול וניהול טקסטים מתקדם
-            </h1>
-            <p className="text-lg text-gray-600">
-              הקלטה, תמלול, עיבוד חכם וחילוק קבצים במקום אחד
-            </p>
-          </div>
-          
+        <div className="flex justify-end items-center mb-8">
           <div className="flex items-center gap-4">
             {/* Additional Features Menu */}
             <DropdownMenu>
