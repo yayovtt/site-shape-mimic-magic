@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,8 +39,103 @@ const getEventTypeText = (type: string) => {
   }
 };
 
+const CalendarGrid = ({ currentDate, events }: { currentDate: Date; events: CalendarEvent[] }) => {
+  const today = new Date();
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  
+  // Get first day of month and calculate starting position
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDate = new Date(firstDay);
+  startDate.setDate(startDate.getDate() - firstDay.getDay());
+  
+  // Create array of all days to show (6 weeks * 7 days)
+  const days = [];
+  const currentDay = new Date(startDate);
+  
+  for (let i = 0; i < 42; i++) {
+    days.push(new Date(currentDay));
+    currentDay.setDate(currentDay.getDate() + 1);
+  }
+  
+  const isToday = (date: Date) => {
+    return date.toDateString() === today.toDateString();
+  };
+  
+  const isCurrentMonth = (date: Date) => {
+    return date.getMonth() === month;
+  };
+  
+  const hasEvents = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return events.some(event => event.date === dateStr);
+  };
+  
+  const getEventsForDate = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return events.filter(event => event.date === dateStr);
+  };
+
+  const dayNames = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+
+  return (
+    <div className="bg-white rounded-2xl p-4 shadow-sm">
+      {/* Day headers */}
+      <div className="grid grid-cols-7 gap-2 mb-2">
+        {dayNames.map((day, index) => (
+          <div key={index} className="text-center text-sm font-medium text-gray-500 p-2">
+            {day}
+          </div>
+        ))}
+      </div>
+      
+      {/* Calendar grid */}
+      <div className="grid grid-cols-7 gap-2">
+        {days.map((date, index) => {
+          const dayEvents = getEventsForDate(date);
+          return (
+            <div
+              key={index}
+              className={`
+                relative h-12 flex items-center justify-center text-sm rounded-xl transition-colors cursor-pointer hover:bg-blue-50
+                ${isToday(date) ? 'bg-blue-500 text-white font-bold' : ''}
+                ${!isCurrentMonth(date) ? 'text-gray-300' : 'text-gray-700'}
+                ${isCurrentMonth(date) && !isToday(date) ? 'hover:bg-gray-100' : ''}
+              `}
+            >
+              <span>{date.getDate()}</span>
+              
+              {/* Event indicators */}
+              {dayEvents.length > 0 && (
+                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-1">
+                  {dayEvents.slice(0, 3).map((event, eventIndex) => (
+                    <div
+                      key={eventIndex}
+                      className={`
+                        w-2 h-2 rounded-full
+                        ${event.type === 'meeting' ? 'bg-blue-500' : ''}
+                        ${event.type === 'task' ? 'bg-green-500' : ''}
+                        ${event.type === 'reminder' ? 'bg-orange-500' : ''}
+                      `}
+                      title={`${event.title} - ${event.time}`}
+                    />
+                  ))}
+                  {dayEvents.length > 3 && (
+                    <div className="w-2 h-2 rounded-full bg-gray-400" title={`+${dayEvents.length - 3} אירועים נוספים`} />
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 export const GoogleCalendarIntegration = () => {
-  const [viewType, setViewType] = useState<'day' | 'week' | 'month'>('week');
+  const [viewType, setViewType] = useState<'day' | 'week' | 'month'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const formatDateHeader = () => {
@@ -160,6 +254,11 @@ export const GoogleCalendarIntegration = () => {
             </SelectContent>
           </Select>
         </div>
+
+        {/* Calendar Grid - Only show for month view */}
+        {viewType === 'month' && (
+          <CalendarGrid currentDate={currentDate} events={sampleEvents} />
+        )}
 
         {/* Events List */}
         <div className="space-y-3">
