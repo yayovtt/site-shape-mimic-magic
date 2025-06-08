@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings, Clock, FileAudio } from "lucide-react";
+import { Settings, Clock, FileAudio, ChevronDown, ChevronUp } from "lucide-react";
 
 interface AudioProcessorProps {
   onTranscription: (text: string, metadata?: any) => void;
@@ -61,10 +61,9 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
   ];
 
   const processAudioChunks = async (file: File): Promise<string> => {
-    const chunkSizeBytes = options.chunkSize * 1024 * 1024; // Convert MB to bytes
+    const chunkSizeBytes = options.chunkSize * 1024 * 1024;
     const chunks: Blob[] = [];
     
-    // Split file into chunks
     for (let start = 0; start < file.size; start += chunkSizeBytes) {
       const end = Math.min(start + chunkSizeBytes, file.size);
       const chunk = file.slice(start, end);
@@ -130,9 +129,7 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
 
     try {
       const fileSizeMB = selectedFile.size / (1024 * 1024);
-      
-      // Check if chunking is needed
-      const maxSize = 25; // 25MB for free tier
+      const maxSize = 25;
       const needsChunking = fileSizeMB > maxSize || options.enableChunking;
 
       let transcriptionText: string;
@@ -140,7 +137,6 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
       if (needsChunking) {
         transcriptionText = await processAudioChunks(selectedFile);
       } else {
-        // Process as single file
         const arrayBuffer = await selectedFile.arrayBuffer();
         const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
@@ -188,6 +184,14 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
 
   const updateOption = (key: keyof TranscriptionOptions, value: any) => {
     setOptions(prev => ({ ...prev, [key]: value }));
+  };
+
+  const toggleTimestampGranularity = (granularity: string) => {
+    const current = options.timestampGranularities;
+    const newGranularities = current.includes(granularity)
+      ? current.filter(g => g !== granularity)
+      : [...current, granularity];
+    updateOption('timestampGranularities', newGranularities);
   };
 
   return (
@@ -248,14 +252,28 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
             <Settings className="w-4 h-4" />
             <Label>הגדרות מתקדמות</Label>
           </div>
-          <Switch 
-            checked={showAdvanced}
-            onCheckedChange={setShowAdvanced}
-          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2"
+          >
+            {showAdvanced ? (
+              <>
+                <ChevronUp className="w-4 h-4" />
+                הסתר
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-4 h-4" />
+                הראה
+              </>
+            )}
+          </Button>
         </div>
 
         {showAdvanced && (
-          <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+          <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
             {/* Chunking Options */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -267,9 +285,9 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
               </div>
               
               {options.enableChunking && (
-                <div className="space-y-2 pl-4">
+                <div className="space-y-3 pl-4 border-l-2 border-blue-200">
                   <div className="flex items-center gap-2">
-                    <Label className="text-sm">גודל חלק (MB):</Label>
+                    <Label className="text-sm min-w-fit">גודל חלק (MB):</Label>
                     <Input
                       type="number"
                       value={options.chunkSize}
@@ -280,7 +298,7 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label className="text-sm">חפיפה (שניות):</Label>
+                    <Label className="text-sm min-w-fit">חפיפה (שניות):</Label>
                     <Input
                       type="number"
                       value={options.chunkOverlap}
@@ -297,56 +315,48 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
             <Separator />
 
             {/* Response Format */}
-            <div className="flex items-center justify-between">
-              <Label>פורמט תגובה</Label>
-              <Select 
-                value={options.responseFormat} 
-                onValueChange={(value: any) => updateOption('responseFormat', value)}
-              >
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="json">JSON רגיל</SelectItem>
-                  <SelectItem value="text">טקסט בלבד</SelectItem>
-                  <SelectItem value="verbose_json">JSON מפורט (עם זמנים)</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>פורמט תגובה</Label>
+                <Select 
+                  value={options.responseFormat} 
+                  onValueChange={(value: any) => updateOption('responseFormat', value)}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="json">JSON רגיל</SelectItem>
+                    <SelectItem value="text">טקסט בלבד</SelectItem>
+                    <SelectItem value="verbose_json">JSON מפורט (עם זמנים)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {options.responseFormat === 'verbose_json' && (
+                <div className="space-y-2 pl-4 border-l-2 border-purple-200">
+                  <Label className="text-sm">רמת זמנים:</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={options.timestampGranularities.includes('segment') ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => toggleTimestampGranularity('segment')}
+                    >
+                      מקטעים
+                    </Button>
+                    <Button
+                      variant={options.timestampGranularities.includes('word') ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => toggleTimestampGranularity('word')}
+                    >
+                      מילים
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {options.responseFormat === 'verbose_json' && (
-              <div className="space-y-2 pl-4">
-                <Label className="text-sm">רמת זמנים:</Label>
-                <div className="flex gap-2">
-                  <Button
-                    variant={options.timestampGranularities.includes('segment') ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => {
-                      const current = options.timestampGranularities;
-                      const newGranularities = current.includes('segment')
-                        ? current.filter(g => g !== 'segment')
-                        : [...current, 'segment'];
-                      updateOption('timestampGranularities', newGranularities);
-                    }}
-                  >
-                    מקטעים
-                  </Button>
-                  <Button
-                    variant={options.timestampGranularities.includes('word') ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => {
-                      const current = options.timestampGranularities;
-                      const newGranularities = current.includes('word')
-                        ? current.filter(g => g !== 'word')
-                        : [...current, 'word'];
-                      updateOption('timestampGranularities', newGranularities);
-                    }}
-                  >
-                    מילים
-                  </Button>
-                </div>
-              </div>
-            )}
+            <Separator />
 
             {/* Temperature */}
             <div className="space-y-2">
@@ -360,18 +370,28 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
                 onChange={(e) => updateOption('temperature', Number(e.target.value))}
                 className="w-full"
               />
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>מדויק (0)</span>
+                <span>יצירתי (1)</span>
+              </div>
             </div>
+
+            <Separator />
 
             {/* Prompt */}
             <div className="space-y-2">
-              <Label className="text-sm">הנחיות למודל (עד 224 מילים):</Label>
+              <Label className="text-sm">הנחיות למודל (עד 224 תווים):</Label>
               <Textarea
                 value={options.prompt || ''}
                 onChange={(e) => updateOption('prompt', e.target.value)}
                 placeholder="לדוגמה: השתמש בכללי כתיב מדויקים, או התמחה במונחים רפואיים..."
                 className="text-sm"
                 maxLength={224}
+                rows={3}
               />
+              <div className="text-xs text-gray-500 text-left">
+                {(options.prompt || '').length}/224 תווים
+              </div>
             </div>
           </div>
         )}
@@ -399,11 +419,16 @@ export const AudioProcessor = ({ onTranscription, selectedFile }: AudioProcessor
         </Button>
 
         {selectedFile && (
-          <div className="text-sm text-gray-600 text-center">
-            גודל קובץ: {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+          <div className="text-sm text-gray-600 text-center space-y-1">
+            <div>גודל קובץ: {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</div>
             {selectedFile.size > 25 * 1024 * 1024 && (
-              <div className="text-orange-600 mt-1">
+              <div className="text-orange-600 font-medium">
                 קובץ גדול - יחולק לחלקים אוטומטית
+              </div>
+            )}
+            {options.enableChunking && (
+              <div className="text-blue-600 font-medium">
+                חילוק מופעל - יעובד במקטעים של {options.chunkSize}MB
               </div>
             )}
           </div>
