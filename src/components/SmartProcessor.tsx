@@ -97,10 +97,10 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
   };
 
   return (
-    <Card className="border-amber-200 bg-amber-50/50">
+    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg text-amber-800">
-          <Sparkles className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <Sparkles className="w-5 h-5 text-purple-600" />
           עיבוד חכם של הטקסט
         </CardTitle>
       </CardHeader>
@@ -112,7 +112,11 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
             variant={selectedEngine === 'chatgpt' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedEngine('chatgpt')}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 ${
+              selectedEngine === 'chatgpt' 
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' 
+                : 'border-purple-200 text-purple-600 hover:bg-purple-50'
+            }`}
           >
             <Bot className="w-4 h-4" />
             ChatGPT
@@ -121,7 +125,11 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
             variant={selectedEngine === 'claude' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedEngine('claude')}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 ${
+              selectedEngine === 'claude' 
+                ? 'bg-gradient-to-r from-green-400 to-orange-400 text-white' 
+                : 'border-green-200 text-green-600 hover:bg-green-50'
+            }`}
           >
             <Bot className="w-4 h-4" />
             Claude
@@ -131,12 +139,12 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
         {/* Categories Selection */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-sm text-gray-700">בחר קטגוריות לעיבוד:</h4>
+            <h4 className="font-medium text-sm text-purple-700">בחר קטגוריות לעיבוד:</h4>
             <Button
               variant="outline"
               size="sm"
               onClick={handleSelectAll}
-              className="text-xs h-7"
+              className="text-xs h-7 border-purple-200 text-purple-600 hover:bg-purple-50"
             >
               {selectedCategories.length === PROCESSING_CATEGORIES.length ? 'בטל הכל' : 'בחר הכל'}
             </Button>
@@ -144,12 +152,12 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {PROCESSING_CATEGORIES.map((category) => (
-              <div key={category.id} className="flex items-start space-x-2 space-x-reverse p-2 rounded-lg hover:bg-gray-50">
+              <div key={category.id} className="flex items-start space-x-2 space-x-reverse p-2 rounded-lg hover:bg-purple-50 transition-colors">
                 <Checkbox
                   id={category.id}
                   checked={selectedCategories.includes(category.id)}
                   onCheckedChange={(checked) => handleCategoryChange(category.id, !!checked)}
-                  className="mt-0.5"
+                  className="mt-0.5 border-purple-300 data-[state=checked]:bg-purple-500"
                 />
                 <div className="flex-1 min-w-0">
                   <label 
@@ -167,12 +175,12 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
 
         {/* Custom Prompt */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">פרומט מותאם אישית (אופציונלי):</label>
+          <label className="text-sm font-medium text-purple-700">פרומט מותאם אישית (אופציונלי):</label>
           <Textarea
             value={customPrompt}
             onChange={(e) => setCustomPrompt(e.target.value)}
             placeholder="הזן הוראות ספציפיות לעיבוד הטקסט..."
-            className="min-h-20 text-sm"
+            className="min-h-20 text-sm border-purple-200 focus:border-purple-400"
           />
         </div>
 
@@ -182,7 +190,7 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
             {selectedCategories.map(categoryId => {
               const category = PROCESSING_CATEGORIES.find(cat => cat.id === categoryId);
               return (
-                <Badge key={categoryId} variant="secondary" className="text-xs">
+                <Badge key={categoryId} className="text-xs bg-purple-100 text-purple-800">
                   {category?.label}
                 </Badge>
               );
@@ -194,7 +202,7 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
         <Button 
           onClick={processText} 
           disabled={isProcessing}
-          className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
         >
           {isProcessing ? (
             <>
