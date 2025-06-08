@@ -94,6 +94,7 @@ serve(async (req) => {
 
       const requestBody = {
         model: 'claude-3-5-haiku-20241022',
+        max_tokens: 8192,
         system: customPrompt.trim(),
         messages: [
           {
