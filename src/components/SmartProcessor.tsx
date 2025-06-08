@@ -1,5 +1,4 @@
 
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,17 +13,61 @@ interface SmartProcessorProps {
   onProcessingComplete: (transcriptionId: string, processedText: string, options: any) => void;
 }
 
+const predefinedCategories = [
+  {
+    id: 'spelling_fix',
+    name: 'תיקון שגיאות כתיב',
+    prompt: 'תקן את כל שגיאות הכתיב והדקדוק בטקסט הבא. החזר את הטקסט המתוקן בלבד ללא הערות או הסברים נוספים.',
+    icon: '✏️'
+  },
+  {
+    id: 'add_sources',
+    name: 'הוספת מקורות',
+    prompt: 'קרא את הטקסט הבא והוסף מקורות רלוונטיים ואמינים לטענות העיקריות. הוסף את המקורות בסוף הטקסט בפורמט של רשימה מסודרת.',
+    icon: '📚'
+  },
+  {
+    id: 'expand_content',
+    name: 'הרחבת התוכן',
+    prompt: 'הרחב את התוכן הבא על ידי הוספת פרטים, דוגמאות והסברים נוספים. שמור על הסגנון והטון המקוריים.',
+    icon: '📝'
+  },
+  {
+    id: 'summarize',
+    name: 'סיכום קצר',
+    prompt: 'סכם את הטקסט הבא ב-3-5 נקודות עיקריות. השתמש בפסיקים ברורים וקצרים.',
+    icon: '📋'
+  },
+  {
+    id: 'bullet_points',
+    name: 'רשימת נקודות',
+    prompt: 'המר את הטקסט הבא לרשימת נקודות מסודרת וברורה. כל נקודה צריכה להיות קצרה ולהתמקד ברעיון אחד.',
+    icon: '• '
+  },
+  {
+    id: 'professional_tone',
+    name: 'סגנון מקצועי',
+    prompt: 'שכתב את הטקסט הבא בסגנון מקצועי ופורמלי. שמור על כל המידע אבל שפר את הניסוח והמבנה.',
+    icon: '💼'
+  }
+];
+
 export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComplete }: SmartProcessorProps) => {
   const [customPrompt, setCustomPrompt] = useState("");
   const [selectedEngine, setSelectedEngine] = useState<'chatgpt' | 'claude'>('chatgpt');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
   const processText = async () => {
-    if (!customPrompt.trim()) {
+    const activePrompt = selectedCategory 
+      ? predefinedCategories.find(cat => cat.id === selectedCategory)?.prompt || ''
+      : customPrompt.trim();
+
+    if (!activePrompt) {
       toast({
         title: "נדרש להזין פרומט",
-        description: "אנא הזן הוראות ספציפיות לעיבוד הטקסט",
+        description: "אנא בחר קטגוריה או הזן פרומט מותאם אישית",
         variant: "destructive",
       });
       return;
@@ -36,13 +79,8 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
       const requestBody: any = {
         text: originalText,
         engine: selectedEngine,
-        categories: []
+        customPrompt: activePrompt
       };
-
-      // Only add customPrompt if it's not empty
-      if (customPrompt.trim()) {
-        requestBody.customPrompt = customPrompt.trim();
-      }
 
       console.log('Sending request with:', requestBody);
 
@@ -58,10 +96,14 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
       }
 
       if (data?.processedText) {
+        const categoryName = selectedCategory 
+          ? predefinedCategories.find(cat => cat.id === selectedCategory)?.name || 'פרומט מותאם'
+          : 'פרומט מותאם';
+
         onProcessingComplete(transcriptionId, data.processedText, {
           engine: selectedEngine,
-          category: 'פרומט מותאם',
-          customPrompt: customPrompt.trim()
+          category: categoryName,
+          customPrompt: activePrompt
         });
 
         toast({
@@ -80,6 +122,22 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleCategorySelect = (categoryId: string) => {
+    if (selectedCategory === categoryId) {
+      setSelectedCategory('');
+    } else {
+      setSelectedCategory(categoryId);
+      setCustomPrompt(''); // Clear custom prompt when selecting predefined category
+    }
+  };
+
+  const handleCustomPromptChange = (value: string) => {
+    setCustomPrompt(value);
+    if (value.trim()) {
+      setSelectedCategory(''); // Clear selected category when typing custom prompt
     }
   };
 
@@ -123,21 +181,50 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
           </Button>
         </div>
 
+        {/* Predefined Categories */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-purple-700">קטגוריות מוגדרות מראש:</label>
+          <div className="grid grid-cols-2 gap-2">
+            {predefinedCategories.map((category) => (
+              <Button
+                key={category.id}
+                variant={selectedCategory === category.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleCategorySelect(category.id)}
+                className={`flex items-center gap-2 text-xs h-auto py-2 px-3 ${
+                  selectedCategory === category.id
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                    : 'border-blue-200 text-blue-600 hover:bg-blue-50'
+                }`}
+              >
+                <span>{category.icon}</span>
+                <span className="text-right">{category.name}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+
         {/* Custom Prompt */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-purple-700">פרומט מותאם אישית:</label>
+          <label className="text-sm font-medium text-purple-700">או פרומט מותאם אישית:</label>
           <Textarea
             value={customPrompt}
-            onChange={(e) => setCustomPrompt(e.target.value)}
-            placeholder="הזן הוראות ספציפיות לעיבוד הטקסט (לדוגמה: 'סכם את הטקסט ב-3 נקודות עיקריות' או 'חלץ את כל המשימות והפעולות מהתוכן')"
+            onChange={(e) => handleCustomPromptChange(e.target.value)}
+            placeholder="הזן הוראות ספציפיות לעיבוד הטקסט (לדוגמה: 'סכם את הטקסט ב-3 נקודות עיקריות')"
             className="min-h-20 text-sm border-purple-200 focus:border-purple-400"
+            disabled={!!selectedCategory}
           />
+          {selectedCategory && (
+            <p className="text-xs text-gray-500">
+              בחרת קטגוריה מוגדרת מראש: {predefinedCategories.find(cat => cat.id === selectedCategory)?.name}
+            </p>
+          )}
         </div>
 
         {/* Process Button */}
         <Button 
           onClick={processText} 
-          disabled={isProcessing || !customPrompt.trim()}
+          disabled={isProcessing || (!customPrompt.trim() && !selectedCategory)}
           className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
         >
           {isProcessing ? (
@@ -156,4 +243,3 @@ export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComp
     </Card>
   );
 };
-
