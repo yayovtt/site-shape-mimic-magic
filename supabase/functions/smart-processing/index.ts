@@ -16,12 +16,11 @@ serve(async (req) => {
   }
 
   try {
-    const { text, engine, categories, customPrompt } = await req.json();
+    const { text, engine, customPrompt } = await req.json();
     
     console.log('Received request:', { 
       textLength: text?.length, 
       engine, 
-      categories,
       hasCustomPrompt: !!customPrompt 
     });
     
@@ -29,9 +28,11 @@ serve(async (req) => {
       throw new Error('Missing required parameters: text and engine');
     }
 
-    // Handle categories properly - they come as an array of Hebrew labels
-    const categoryLabels = Array.isArray(categories) ? categories : (categories ? [categories] : []);
-    console.log(`Processing with ${engine} for categories:`, categoryLabels);
+    if (!customPrompt || !customPrompt.trim()) {
+      throw new Error('Custom prompt is required');
+    }
+
+    console.log(`Processing with ${engine} using custom prompt only`);
 
     let processedText = '';
     
@@ -41,8 +42,7 @@ serve(async (req) => {
         throw new Error('מפתח OpenAI API אינו מוגדר כראוי. אנא בדוק שהמפתח תקין ומתחיל ב-sk-');
       }
 
-      const systemPrompt = customPrompt || getSystemPrompt(categoryLabels);
-      console.log('Using system prompt for ChatGPT');
+      console.log('Using custom prompt for ChatGPT');
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -55,7 +55,7 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: systemPrompt
+              content: customPrompt.trim()
             },
             {
               role: 'user',
@@ -91,13 +91,12 @@ serve(async (req) => {
       }
 
       console.log('Claude API key found, proceeding with request');
-      const systemPrompt = customPrompt || getSystemPrompt(categoryLabels);
-      console.log('Using system prompt for Claude');
+      console.log('Using custom prompt for Claude');
 
       const requestBody = {
         model: 'claude-3-5-haiku-20241022',
         max_tokens: 4000,
-        system: systemPrompt,
+        system: customPrompt.trim(),
         messages: [
           {
             role: 'user',
@@ -172,29 +171,3 @@ serve(async (req) => {
     );
   }
 });
-
-function getSystemPrompt(categories: string[]): string {
-  if (!categories || categories.length === 0) {
-    return 'אתה עוזר AI מומחה בעיבוד טקסטים בעברית. תפקידך לשפר ולארגן את הטקסט הנתון בצורה ברורה ומועילת. הציג את התוצאה בעברית בפורמט ברור ומסודר.';
-  }
-
-  const categoryPrompts: Record<string, string> = {
-    'סיכום': 'אתה עוזר AI מומחה בסיכום טקסטים בעברית. תפקידך לסכם את הטקסט הנתון בצורה ברורה ותמציתית, תוך שמירה על הנקודות החשובות והמידע המרכזי. הסיכום יהיה בעברית ויכלול את העיקרים בלבד.',
-    'פעולות נדרשות': 'אתה עוזר AI מומחה בזיהוי משימות ופעולות. תפקידך לחלץ מהטקסט את כל המשימות, הפעולות והדברים שצריך לעשות. ארגן אותם ברשימה ברורה ומסודרת בעברית.',
-    'נקודות עיקריות': 'אתה עוזר AI מומחה בזיהוי נקודות מפתח. תפקידך לחלץ ולהדגיש את הנקודות החשובות והמרכזיות ביותר מהטקסט. הציג אותם בצורה מסודרת בעברית.',
-    'שאלות ותשובות': 'אתה עוזר AI מומחה בזיהוי שאלות ותשובות. תפקידך לחלץ מהטקסט שאלות שנשאלו ותשובות שניתנו, או ליצור שאלות רלוונטיות על סמך התוכן. הציג בפורמט שאלה-תשובה בעברית.',
-    'החלטות': 'אתה עוזר AI מומחה בזיהוי החלטות. תפקידך לחלץ מהטקסט את כל החלטות שהתקבלו, הסכמות שהושגו והמסקנות. ארגן אותם ברשימה ברורה בעברית.',
-    'עיצוב וארגון': 'אתה עוזר AI מומחה בעיצוב וארגון טקסט. תפקידך לארגן את הטקסט עם כותרות, תת-כותרות, רשימות ופסקאות מסודרות. שפר את הקריאות והבהירות בעברית.',
-    'תוספת מקורות': 'אתה עוזר AI מומחה בהוספת מקורות ומידע נוסף. תפקידך להציע מקורות רלוונטיים, קישורים לקריאה נוספת והפניות שיכולות להעשיר את התוכן. הוסף הצעות למקורות אמינים בעברית.',
-    'תיקון שגיאות כתיב ועריכה לשונית': 'אתה עוזר AI מומחה בתיקון דקדוק ועריכה בעברית. תפקידך לתקן שגיאות כתיב, דקדוק ואיות, לשפר את הניסוח והזרימה של הטקסט. החזר טקסט מתוקן ומעורך בעברית תקנית וברורה.'
-  };
-
-  if (categories.length === 1) {
-    return categoryPrompts[categories[0]] || categoryPrompts['סיכום'];
-  }
-
-  const categoryString = categories.join(', ');
-  return `אתה עוזר AI מומחה בעיבוד טקסטים בעברית. תפקידך לעבד את הטקסט הנתון על פי הקטגוריות הבאות: ${categoryString}. 
-  
-עבור כל קטגוריה, בצע את המשימה המתאימה והציג את התוצאות בפורמט ברור ומסודר בעברית. אם יש מספר קטגוריות, ארגן את התוצאה עם כותרות נפרדות לכל קטגוריה.`;
-}
