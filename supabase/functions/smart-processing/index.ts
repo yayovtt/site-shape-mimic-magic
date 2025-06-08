@@ -37,7 +37,8 @@ serve(async (req) => {
     
     if (engine === 'chatgpt') {
       if (!OPENAI_API_KEY) {
-        throw new Error('OpenAI API key not configured');
+        console.error('OpenAI API key not configured');
+        throw new Error('OpenAI API key is not configured. Please add the OPENAI_API_KEY to your environment variables.');
       }
 
       const systemPrompt = customPrompt || getSystemPrompt(categoryLabels);
@@ -78,7 +79,8 @@ serve(async (req) => {
       
     } else if (engine === 'claude') {
       if (!CLAUDE_API_KEY) {
-        throw new Error('Claude API key not configured');
+        console.error('Claude API key not configured');
+        throw new Error('Claude API key is not configured. Please add the CLAUDE_API_KEY to your environment variables.');
       }
 
       const systemPrompt = customPrompt || getSystemPrompt(categoryLabels);
