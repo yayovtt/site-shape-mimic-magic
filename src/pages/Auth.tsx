@@ -32,14 +32,11 @@ const Auth = () => {
           variant: "destructive",
         });
       } else {
-        if (isLogin) {
-          navigate("/");
-        } else {
-          toast({
-            title: "הרשמה בוצעה בהצלחה",
-            description: "אנא בדוק את האימייל שלך לאישור",
-          });
-        }
+        toast({
+          title: isLogin ? "התחברת בהצלחה" : "נרשמת בהצלחה",
+          description: isLogin ? "ברוך הבא!" : "ברוך הבא למערכת!",
+        });
+        navigate("/");
       }
     } catch (error) {
       toast({
