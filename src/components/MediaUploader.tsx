@@ -123,7 +123,8 @@ export const MediaUploader = ({ onTranscription }: MediaUploaderProps) => {
               variant="ghost"
               size="sm"
               onClick={clearFile}
-              className="text-red-500 hover:text-red-700"
+              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 w-8 h-8"
+              title="מחק קובץ"
             >
               <X className="w-4 h-4" />
             </Button>
