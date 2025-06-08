@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Bot, User } from "lucide-react";
+import { VoiceRecorder } from "./VoiceRecorder";
 
 interface ChatMessage {
   id: string;
@@ -20,8 +21,12 @@ export const ChatGPT = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleVoiceTranscription = (text: string) => {
+    setNewMessage(text);
+  };
+
+  const sendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!newMessage.trim() || isLoading) return;
 
     setIsLoading(true);
@@ -107,7 +112,7 @@ export const ChatGPT = () => {
             {messages.length === 0 && (
               <div className="text-center text-gray-500 mt-8">
                 <Bot className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>שלח הודעה כדי להתחיל שיחה עם GPT</p>
+                <p>שלח הודעה או הקלט קול כדי להתחיל שיחה עם GPT</p>
                 <p className="text-sm mt-2">אני יכול לעזור לך עם ניהול משימות, יעדים, פגישות ועוד</p>
               </div>
             )}
@@ -143,6 +148,10 @@ export const ChatGPT = () => {
           </div>
         </ScrollArea>
         <div className="p-4 border-t">
+          <div className="flex items-center gap-2 mb-2">
+            <VoiceRecorder onTranscription={handleVoiceTranscription} />
+            <span className="text-sm text-gray-500">או כתוב ידנית:</span>
+          </div>
           <form onSubmit={sendMessage} className="flex gap-2">
             <Input
               placeholder="כתוב הודעה... (למשל: איך אני יכול לארגן את היום שלי?)"
