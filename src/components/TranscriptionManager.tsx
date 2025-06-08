@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,9 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { VoiceRecorder } from "./VoiceRecorder";
-import { MediaUploader } from "./MediaUploader";
+import { EnhancedMediaUploader } from "./EnhancedMediaUploader";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Upload, FileText, Edit3, Save, X, Copy, Download } from "lucide-react";
+import { Mic, Upload, FileText, Edit3, Save, X, Copy, Download, Clock, Settings } from "lucide-react";
 
 interface TranscriptionItem {
   id: string;
@@ -16,6 +15,7 @@ interface TranscriptionItem {
   source: 'voice' | 'file';
   timestamp: Date;
   filename?: string;
+  metadata?: any;
 }
 
 export const TranscriptionManager = () => {
@@ -24,29 +24,31 @@ export const TranscriptionManager = () => {
   const [editText, setEditText] = useState("");
   const { toast } = useToast();
 
-  const handleTranscription = (text: string, source: 'voice' | 'file' = 'voice', filename?: string) => {
+  const handleTranscription = (text: string, metadata?: any) => {
+    const source = metadata?.filename ? 'file' : 'voice';
     const newTranscription: TranscriptionItem = {
       id: crypto.randomUUID(),
       text,
       source,
       timestamp: new Date(),
-      filename
+      filename: metadata?.filename,
+      metadata
     };
 
     setTranscriptions(prev => [newTranscription, ...prev]);
     
     toast({
       title: "תמלול הושלם!",
-      description: `הטקסט נוסף לרשימת התמלולים (${source === 'voice' ? 'הקלטה' : 'קובץ'})`,
+      description: `הטקסט נוסף לרשימת התמלולים${metadata?.chunked ? ' (עובד במקטעים)' : ''}`,
     });
   };
 
   const handleVoiceTranscription = (text: string) => {
-    handleTranscription(text, 'voice');
+    handleTranscription(text);
   };
 
   const handleFileTranscription = (text: string, filename?: string) => {
-    handleTranscription(text, 'file', filename);
+    handleTranscription(text, { filename });
   };
 
   const startEdit = (transcription: TranscriptionItem) => {
@@ -118,7 +120,7 @@ export const TranscriptionManager = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-6 h-6" />
-            מרכז תמלול וניהול טקסטים
+            מרכז תמלול וניהול טקסטים מתקדם
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -126,20 +128,20 @@ export const TranscriptionManager = () => {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               <Mic className="w-5 h-5 text-blue-600" />
-              <h3 className="font-medium text-blue-800">הקלטת קול</h3>
+              <h3 className="font-medium text-blue-800">הקלטת קול מהירה</h3>
             </div>
             <VoiceRecorder onTranscription={handleVoiceTranscription} />
           </div>
 
           <Separator />
 
-          {/* File Upload Section */}
+          {/* Enhanced File Upload Section */}
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Upload className="w-5 h-5 text-green-600" />
-              <h3 className="font-medium text-green-800">העלאת קבצי אודיו ווידאו</h3>
+              <Settings className="w-5 h-5 text-green-600" />
+              <h3 className="font-medium text-green-800">העלאה וטמלול מתקדם</h3>
             </div>
-            <MediaUploader onTranscription={handleFileTranscription} />
+            <EnhancedMediaUploader onTranscription={handleTranscription} />
           </div>
 
           <Separator />
@@ -173,6 +175,17 @@ export const TranscriptionManager = () => {
                           </Badge>
                           {transcription.filename && (
                             <span className="text-xs text-gray-500">{transcription.filename}</span>
+                          )}
+                          {transcription.metadata?.chunked && (
+                            <Badge variant="outline" className="text-xs">
+                              <Settings className="w-3 h-3 mr-1" />
+                              מעובד במקטעים
+                            </Badge>
+                          )}
+                          {transcription.metadata?.size && (
+                            <span className="text-xs text-gray-400">
+                              {transcription.metadata.size.toFixed(1)} MB
+                            </span>
                           )}
                         </div>
                         <div className="flex items-center gap-1">
@@ -252,8 +265,15 @@ export const TranscriptionManager = () => {
                         </div>
                       )}
                       
-                      <div className="text-xs text-gray-400 mt-2">
+                      <div className="text-xs text-gray-400 mt-2 flex items-center gap-2">
+                        <Clock className="w-3 h-3" />
                         {transcription.timestamp.toLocaleString('he-IL')}
+                        {transcription.metadata?.options && (
+                          <span className="text-gray-500">
+                            • {transcription.metadata.options.model}
+                            {transcription.metadata.options.language && ` • ${transcription.metadata.options.language}`}
+                          </span>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
