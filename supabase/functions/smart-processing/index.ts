@@ -38,7 +38,7 @@ serve(async (req) => {
     if (engine === 'chatgpt') {
       if (!OPENAI_API_KEY) {
         console.error('OpenAI API key not configured');
-        throw new Error('OpenAI API key is not configured. Please add the OPENAI_API_KEY to your environment variables.');
+        throw new Error('מפתח OpenAI API אינו מוגדר כראוי. אנא בדוק שהמפתח תקין ומתחיל ב-sk-');
       }
 
       const systemPrompt = customPrompt || getSystemPrompt(categoryLabels);
@@ -70,7 +70,14 @@ serve(async (req) => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('OpenAI API error:', errorData);
-        throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        
+        if (response.status === 401) {
+          throw new Error('מפתח OpenAI API אינו תקף. אנא בדוק שהמפתח נכון ופעיל.');
+        } else if (response.status === 429) {
+          throw new Error('חריגה מהמכסה של OpenAI API. אנא נסה שוב מאוחר יותר.');
+        } else {
+          throw new Error(`שגיאה ב-OpenAI API: ${response.status} - ${errorData.error?.message || 'שגיאה לא ידועה'}`);
+        }
       }
 
       const result = await response.json();
@@ -80,7 +87,7 @@ serve(async (req) => {
     } else if (engine === 'claude') {
       if (!CLAUDE_API_KEY) {
         console.error('Claude API key not configured');
-        throw new Error('Claude API key is not configured. Please add the CLAUDE_API_KEY to your environment variables.');
+        throw new Error('מפתח Claude API אינו מוגדר כראוי. אנא בדוק שהמפתח תקין ומתחיל ב-sk-ant-');
       }
 
       const systemPrompt = customPrompt || getSystemPrompt(categoryLabels);
@@ -109,7 +116,14 @@ serve(async (req) => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Claude API error:', errorData);
-        throw new Error(`Claude API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        
+        if (response.status === 401) {
+          throw new Error('מפתח Claude API אינו תקף. אנא בדוק שהמפתח נכון ופעיל.');
+        } else if (response.status === 429) {
+          throw new Error('חריגה מהמכסה של Claude API. אנא נסה שוב מאוחר יותר.');
+        } else {
+          throw new Error(`שגיאה ב-Claude API: ${response.status} - ${errorData.error?.message || 'שגיאה לא ידועה'}`);
+        }
       }
 
       const result = await response.json();
