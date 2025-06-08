@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log("AuthProvider: Setting up auth state listener");
     
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("AuthProvider: Auth state changed", { event, session: !!session });
@@ -39,6 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("AuthProvider: Initial session check", { session: !!session });
       setSession(session);
@@ -50,32 +52,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    console.log("AuthProvider: Attempting sign in");
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    console.log("AuthProvider: Sign in result", { error });
-    return { error };
+    console.log("AuthProvider: Attempting sign in with email:", email);
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      
+      console.log("AuthProvider: Sign in result", { error, user: data?.user?.id });
+      return { error };
+    } catch (err) {
+      console.error("AuthProvider: Sign in catch error", err);
+      return { error: err };
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signUp = async (email: string, password: string) => {
-    console.log("AuthProvider: Attempting sign up");
-    const redirectUrl = `${window.location.origin}/`;
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl
-      }
-    });
-    console.log("AuthProvider: Sign up result", { error });
-    return { error };
+    console.log("AuthProvider: Attempting sign up with email:", email);
+    setLoading(true);
+    
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: redirectUrl
+        }
+      });
+      
+      console.log("AuthProvider: Sign up result", { error, user: data?.user?.id });
+      return { error };
+    } catch (err) {
+      console.error("AuthProvider: Sign up catch error", err);
+      return { error: err };
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signOut = async () => {
     console.log("AuthProvider: Signing out");
-    await supabase.auth.signOut();
+    setLoading(true);
+    
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("AuthProvider: Sign out error", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {
