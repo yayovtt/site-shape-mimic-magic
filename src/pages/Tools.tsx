@@ -1,9 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { GradientButton } from "@/components/GradientButton";
 import { StatusCard } from "@/components/StatusCard";
+import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { 
   CheckSquare, 
   Target, 
@@ -12,14 +15,19 @@ import {
   Trophy, 
   Clock, 
   ArrowRight,
-  Home
+  Home,
+  ChevronDown,
+  Plus,
+  Star
 } from "lucide-react";
 
 const Tools = () => {
   const navigate = useNavigate();
+  const [expandedTool, setExpandedTool] = useState<string | null>(null);
 
   const tools = [
     {
+      id: "tasks",
       title: "משימות",
       icon: CheckSquare,
       gradient: "from-purple-500 via-purple-600 to-pink-500",
@@ -30,9 +38,15 @@ const Tools = () => {
         { label: "ממתינות", value: 5, color: "text-orange-600" },
         { label: "בעדיפות גבוהה", value: 2, color: "text-red-600" }
       ],
-      description: "נהל את המשימות שלך בצורה יעילה ומאורגנת"
+      description: "נהל את המשימות שלך בצורה יעילה ומאורגנת",
+      goals: [
+        "השלמת 10 משימות השבוע",
+        "ארגון משימות לפי עדיפות",
+        "שמירה על קצב עבודה קבוע"
+      ]
     },
     {
+      id: "goals",
       title: "יעדים",
       icon: Target,
       gradient: "from-green-400 via-green-500 to-teal-500",
@@ -43,9 +57,15 @@ const Tools = () => {
         { label: "בתהליך", value: 3, color: "text-yellow-600" },
         { label: "אחוז הצלחה", value: "75%", color: "text-purple-600" }
       ],
-      description: "הגדר והשג את היעדים שלך עם מעקב התקדמות"
+      description: "הגדר והשג את היעדים שלך עם מעקב התקדמות",
+      goals: [
+        "הגדרת 5 יעדים חדשים החודש",
+        "השגת יעד אחד לפחות השבוע",
+        "מעקב יומי אחר התקדמות"
+      ]
     },
     {
+      id: "meetings",
       title: "פגישות",
       icon: Calendar,
       gradient: "from-blue-400 via-blue-500 to-indigo-500",
@@ -56,9 +76,15 @@ const Tools = () => {
         { label: "מתוזמנות", value: 4, color: "text-orange-600" },
         { label: "זמן ממוצע", value: "45 דק'", color: "text-purple-600" }
       ],
-      description: "תזמן ונהל פגישות בצורה חכמה ויעילה"
+      description: "תזמן ונהל פגישות בצורה חכמה ויעילה",
+      goals: [
+        "תיזמון מוקדם של כל הפגישות",
+        "הכנה מקדימה לכל פגישה",
+        "מעקב אחר תוצאות הפגישות"
+      ]
     },
     {
+      id: "chat",
       title: "צ'אט AI",
       icon: MessageSquare,
       gradient: "from-pink-400 via-pink-500 to-rose-500",
@@ -69,9 +95,15 @@ const Tools = () => {
         { label: "תשובות מועילות", value: "95%", color: "text-green-600" },
         { label: "זמן תגובה", value: "2 שנ'", color: "text-purple-600" }
       ],
-      description: "שוחח עם עוזר AI חכם שיעזור לך בכל שאלה"
+      description: "שוחח עם עוזר AI חכם שיעזור לך בכל שאלה",
+      goals: [
+        "שימוש יומי ב-AI לקבלת עזרה",
+        "למידת טכניקות חדשות מה-AI",
+        "שיפור יעילות העבודה"
+      ]
     },
     {
+      id: "achievements",
       title: "הישגים",
       icon: Trophy,
       gradient: "from-yellow-400 via-orange-400 to-red-400",
@@ -82,9 +114,15 @@ const Tools = () => {
         { label: "נקודות כולל", value: 1250, color: "text-blue-600" },
         { label: "רמה נוכחית", value: 7, color: "text-purple-600" }
       ],
-      description: "עקוב אחר ההתקדמות שלך וקבל תגמולים"
+      description: "עקוב אחר ההתקדמות שלך וקבל תגמולים",
+      goals: [
+        "השגת 3 הישגים חדשים החודש",
+        "הגעה לרמה 10",
+        "איסוף 2000 נקודות"
+      ]
     },
     {
+      id: "schedules",
       title: "לוח זמנים",
       icon: Clock,
       gradient: "from-indigo-400 via-blue-500 to-purple-500",
@@ -95,9 +133,18 @@ const Tools = () => {
         { label: "תזכורות", value: 5, color: "text-orange-600" },
         { label: "יעילות זמן", value: "87%", color: "text-blue-600" }
       ],
-      description: "תכנן את היום שלך בצורה אופטימלית"
+      description: "תכנן את היום שלך בצורה אופטימלית",
+      goals: [
+        "ניצול מלא של הזמן הפנוי",
+        "הגעה ל-90% יעילות זמן",
+        "שמירה על איזון עבודה-חיים"
+      ]
     }
   ];
+
+  const toggleTool = (toolId: string) => {
+    setExpandedTool(expandedTool === toolId ? null : toolId);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50" dir="rtl">
@@ -120,39 +167,137 @@ const Tools = () => {
           </Button>
         </div>
 
-        {/* Tools Grid */}
-        <div className="space-y-12">
+        {/* Motivational Quotes */}
+        <div className="mb-8">
+          <MotivationalQuotes />
+        </div>
+
+        {/* Tools List */}
+        <div className="space-y-4 mb-12">
           {tools.map((tool, index) => (
-            <div key={index} className="space-y-6">
-              {/* Tool Button */}
-              <div className="flex justify-center">
-                <GradientButton
-                  title={tool.title}
-                  icon={tool.icon}
-                  gradient={tool.gradient}
-                  onClick={() => navigate(tool.path)}
-                />
-              </div>
+            <div key={tool.id}>
+              <Collapsible 
+                open={expandedTool === tool.id} 
+                onOpenChange={() => toggleTool(tool.id)}
+              >
+                <Card className="overflow-hidden">
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className={`p-3 rounded-xl bg-gradient-to-r ${tool.gradient}`}>
+                            <tool.icon className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-xl">{tool.title}</CardTitle>
+                            <p className="text-gray-600">{tool.description}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(tool.path);
+                            }}
+                            className={`bg-gradient-to-r ${tool.gradient} hover:opacity-90`}
+                          >
+                            פתח כלי
+                          </Button>
+                          <ChevronDown className="w-5 h-5 transition-transform duration-200" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <CardContent className="pt-0">
+                      {/* Status Cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <StatusCard
+                          title={tool.title}
+                          icon={tool.icon}
+                          stats={tool.stats}
+                          description={tool.description}
+                        />
+                      </div>
 
-              {/* Status Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatusCard
-                  title={tool.title}
-                  icon={tool.icon}
-                  stats={tool.stats}
-                  description={tool.description}
-                />
-              </div>
-
-              {/* Divider */}
-              {index < tools.length - 1 && (
-                <div className="flex items-center justify-center py-4">
-                  <div className="w-full max-w-md h-px bg-gradient-to-r from-transparent via-purple-200 to-transparent"></div>
-                </div>
-              )}
+                      {/* Goals Section */}
+                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                          <Target className="w-5 h-5 text-purple-600" />
+                          יעדים ומטרות
+                        </h4>
+                        <div className="grid gap-3">
+                          {tool.goals.map((goal, goalIndex) => (
+                            <div key={goalIndex} className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm">
+                              <Star className="w-4 h-4 text-yellow-500" />
+                              <span className="text-gray-700">{goal}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
             </div>
           ))}
         </div>
+
+        {/* Goals and Targets Overview */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-2xl">
+              <Trophy className="w-6 h-6 text-yellow-500" />
+              סיכום יעדים כללי
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-3xl font-bold text-green-600 mb-2">18</div>
+                <div className="text-green-700">יעדים הושגו השבוע</div>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-3xl font-bold text-blue-600 mb-2">25</div>
+                <div className="text-blue-700">יעדים פעילים</div>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <div className="text-3xl font-bold text-purple-600 mb-2">82%</div>
+                <div className="text-purple-700">שיעור הצלחה</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Custom Motivational Messages */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Plus className="w-5 h-5" />
+              הוסף משפט עידוד אישי
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div className="p-4 bg-gradient-to-r from-green-100 to-blue-100 rounded-lg">
+                <p className="text-lg font-medium text-center">
+                  "אתה יכול להשיג כל דבר שאתה שם את הדעת עליו! 💪"
+                </p>
+              </div>
+              <div className="p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
+                <p className="text-lg font-medium text-center">
+                  "כל יום הוא הזדמנות חדשה להצליח! ⭐"
+                </p>
+              </div>
+              <div className="p-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg">
+                <p className="text-lg font-medium text-center">
+                  "התמדה היא המפתח להצלחה! 🏆"
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Footer Action */}
         <div className="text-center mt-12">
