@@ -1,15 +1,19 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckSquare, Target, Calendar, MessageSquare, Trophy, Clock, LogOut } from "lucide-react";
+import { CheckSquare, Target, Calendar, MessageSquare, Trophy, Clock, LogOut, Menu, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
-import { VoiceRecorder } from "@/components/VoiceRecorder";
-import { MediaUploader } from "@/components/MediaUploader";
-import { QuickStats } from "@/components/QuickStats";
+import { useEffect, useState } from "react";
 import { TranscriptionManager } from "@/components/TranscriptionManager";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -87,50 +91,65 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50" dir="rtl">
       <div className="container mx-auto px-4 py-8">
+        {/* Header with navigation */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              ברוך הבא למערכת ניהול האישי שלך
+              מרכז תמלול וניהול טקסטים מתקדם
             </h1>
             <p className="text-lg text-gray-600">
-              נהל משימות, יעדים ופגישות במקום אחד
+              הקלטה, תמלול, עיבוד חכם וחילוק קבצים במקום אחד
             </p>
           </div>
-          <Button
-            onClick={handleSignOut}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            התנתק
-          </Button>
-        </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Additional Features Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-100 to-green-100 border-purple-200 hover:from-purple-200 hover:to-green-200"
+                >
+                  <Settings className="w-5 h-5" />
+                  כלים נוספים
+                  <Menu className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" dir="rtl">
+                {features.map((feature, index) => (
+                  <DropdownMenuItem
+                    key={index}
+                    onClick={() => navigate(feature.path)}
+                    className="cursor-pointer flex items-center gap-3 p-3"
+                  >
+                    <div className={`w-8 h-8 ${feature.color} rounded-full flex items-center justify-center`}>
+                      <feature.icon className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">{feature.title}</div>
+                      <div className="text-sm text-gray-500">{feature.description}</div>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-        {/* Quick Stats Section */}
-        <QuickStats onNavigate={navigate} />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {features.map((feature, index) => (
-            <Card 
-              key={index} 
-              className="hover:shadow-lg transition-shadow cursor-pointer group"
-              onClick={() => navigate(feature.path)}
+            {/* Logout Button */}
+            <Button
+              onClick={handleSignOut}
+              variant="outline"
+              className="flex items-center gap-2"
             >
-              <CardHeader className="text-center">
-                <div className={`w-16 h-16 ${feature.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-xl">{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 text-center">{feature.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+              <LogOut className="w-4 h-4" />
+              התנתק
+            </Button>
+          </div>
         </div>
 
-        {/* Transcription Section */}
-        <TranscriptionManager />
+        {/* Main Transcription Section - Full Page */}
+        <div className="w-full">
+          <TranscriptionManager />
+        </div>
       </div>
     </div>
   );
