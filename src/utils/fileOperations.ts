@@ -11,18 +11,42 @@ export const downloadText = (text: string, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
-export const saveToFolder = (text: string, transcription: any) => {
-  const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(
-    `תמלול\n` +
+export const saveToFolder = async (text: string, transcription: any) => {
+  const filename = `תמלול_${new Date(transcription.created_at).toLocaleDateString('he-IL').replace(/\//g, '_')}.txt`;
+  const content = `תמלול\n` +
     `תאריך: ${new Date(transcription.created_at).toLocaleDateString('he-IL')}\n` +
     (transcription.filename ? `קובץ מקורי: ${transcription.filename}\n` : '') +
     (transcription.processing_engine ? `עובד עם: ${transcription.processing_engine === 'chatgpt' ? 'ChatGPT' : 'Claude'}\n` : '') +
-    `\n${text}`
-  );
-  
+    `\n${text}`;
+
+  // Try to use File System Access API if available (Chrome, Edge)
+  if ('showSaveFilePicker' in window) {
+    try {
+      const fileHandle = await (window as any).showSaveFilePicker({
+        suggestedName: filename,
+        types: [{
+          description: 'Text files',
+          accept: {
+            'text/plain': ['.txt']
+          }
+        }]
+      });
+      
+      const writable = await fileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      return;
+    } catch (error) {
+      // User cancelled or error occurred, fall back to download
+      console.log('File save cancelled or error:', error);
+    }
+  }
+
+  // Fallback to regular download
+  const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(content);
   const downloadAnchorNode = document.createElement('a');
   downloadAnchorNode.setAttribute("href", dataStr);
-  downloadAnchorNode.setAttribute("download", `תמלול_${new Date(transcription.created_at).toLocaleDateString('he-IL').replace(/\//g, '_')}.txt`);
+  downloadAnchorNode.setAttribute("download", filename);
   document.body.appendChild(downloadAnchorNode);
   downloadAnchorNode.click();
   downloadAnchorNode.remove();
