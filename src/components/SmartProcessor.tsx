@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +20,9 @@ const PROCESSING_CATEGORIES = [
   { id: 'key_points', label: 'נקודות עיקריות', description: 'הנקודות החשובות ביותר' },
   { id: 'questions', label: 'שאלות ותשובות', description: 'שאלות וטעמים שעלו בתוכן' },
   { id: 'decisions', label: 'החלטות', description: 'החלטות שהתקבלו במהלך השיחה' },
-  { id: 'formatting', label: 'עיצוב וארגון', description: 'ארגון הטקסט עם כותרות ורשימות' }
+  { id: 'formatting', label: 'עיצוב וארגון', description: 'ארגון הטקסט עם כותרות ורשימות' },
+  { id: 'add_sources', label: 'תוספת מקורות', description: 'הוספת מקורות רלוונטיים והפניות לקריאה נוספת' },
+  { id: 'spelling_editing', label: 'תיקון שגיאות כתיב ועריכה לשונית', description: 'תיקון שגיאות כתיב ועריכה קלה לשיפור הזרימה והבהירות' }
 ];
 
 export const SmartProcessor = ({ transcriptionId, originalText, onProcessingComplete }: SmartProcessorProps) => {

@@ -50,7 +50,7 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 h-full" dir="rtl">
+    <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 h-full min-w-96 w-full" dir="rtl">
       <div className="flex items-center gap-2 mb-4">
         <div className="bg-gradient-to-r from-purple-500 to-green-400 rounded-lg p-2">
           <FileText className="w-5 h-5 text-white" />
