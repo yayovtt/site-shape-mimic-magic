@@ -62,7 +62,6 @@ serve(async (req) => {
               content: text
             }
           ],
-          max_tokens: 4000,
           temperature: 0.7
         }),
       });
@@ -95,7 +94,6 @@ serve(async (req) => {
 
       const requestBody = {
         model: 'claude-3-5-haiku-20241022',
-        max_tokens: 4000,
         system: customPrompt.trim(),
         messages: [
           {
