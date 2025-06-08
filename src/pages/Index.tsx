@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckSquare, Target, Calendar, MessageSquare, Trophy, Clock, LogOut, Menu, Settings } from "lucide-react";
@@ -95,37 +94,15 @@ const Index = () => {
         <div className="flex justify-end items-center mb-8">
           <div className="flex items-center gap-4">
             {/* Additional Features Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 bg-gradient-to-r from-purple-100 to-green-100 border-purple-200 hover:from-purple-200 hover:to-green-200"
-                >
-                  <Settings className="w-5 h-5" />
-                  כלים נוספים
-                  <Menu className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
-                <div dir="rtl">
-                  {features.map((feature, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      onClick={() => navigate(feature.path)}
-                      className="cursor-pointer flex items-center gap-3 p-3"
-                    >
-                      <div className={`w-8 h-8 ${feature.color} rounded-full flex items-center justify-center`}>
-                        <feature.icon className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium">{feature.title}</div>
-                        <div className="text-sm text-gray-500">{feature.description}</div>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              onClick={() => navigate("/tools")}
+              variant="outline"
+              className="flex items-center gap-2 bg-gradient-to-r from-purple-100 to-green-100 border-purple-200 hover:from-purple-200 hover:to-green-200"
+            >
+              <Settings className="w-5 h-5" />
+              כלים נוספים
+              <Menu className="w-4 h-4" />
+            </Button>
 
             {/* Logout Button */}
             <Button
