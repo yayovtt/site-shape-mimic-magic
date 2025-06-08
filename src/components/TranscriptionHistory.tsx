@@ -191,7 +191,7 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 h-full">
+    <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 h-full" dir="rtl">
       <div className="flex items-center gap-2 mb-4">
         <div className="bg-gradient-to-r from-purple-500 to-green-400 rounded-lg p-2">
           <FileText className="w-5 h-5 text-white" />
@@ -210,7 +210,7 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
       ) : (
         <div className="space-y-4 max-h-96 overflow-y-auto">
           {transcriptions.map((transcription) => (
-            <div key={transcription.id} className="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:shadow-md transition-shadow">
+            <div key={transcription.id} className="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:shadow-md transition-shadow" dir="rtl">
               {/* Header with badges and actions */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -219,14 +219,14 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
                     className="rounded-md bg-purple-100 text-purple-800 text-sm"
                   >
                     {transcription.metadata?.source === 'voice' ? (
-                      <><Mic className="w-3 h-3 mr-1" /> הקלטה</>
+                      <><Mic className="w-3 h-3 ml-1" /> הקלטה</>
                     ) : (
-                      <><Upload className="w-3 h-3 mr-1" /> קובץ</>
+                      <><Upload className="w-3 h-3 ml-1" /> קובץ</>
                     )}
                   </Badge>
                   {transcription.processing_engine && (
                     <Badge variant="outline" className="text-sm rounded-md bg-green-100 text-green-800">
-                      <Sparkles className="w-3 h-3 mr-1" />
+                      <Sparkles className="w-3 h-3 ml-1" />
                       {transcription.processing_engine === 'chatgpt' ? 'GPT' : 'Claude'}
                     </Badge>
                   )}
@@ -259,11 +259,11 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
               {(transcription.filename || transcription.file_size_mb) && (
                 <div className="mb-3 space-y-1">
                   {transcription.filename && (
-                    <p className="text-sm font-medium text-gray-700 truncate" title={transcription.filename}>
+                    <p className="text-sm font-medium text-gray-700 truncate text-right" title={transcription.filename}>
                       📁 {transcription.filename}
                     </p>
                   )}
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <div className="flex items-center justify-end gap-4 text-sm text-gray-500">
                     {transcription.file_size_mb && (
                       <span className="flex items-center gap-1">
                         <FileText className="w-3 h-3" />
@@ -280,15 +280,47 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
 
               {/* Full text display */}
               <div className="mb-3">
-                <div className="bg-white p-4 rounded-lg border border-gray-200 max-h-64 overflow-y-auto">
-                  <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                    {transcription.processed_text || transcription.original_text}
-                  </p>
-                </div>
+                {editingId === transcription.id ? (
+                  <div className="space-y-3">
+                    <Textarea
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      className="min-h-32 resize-y border-gray-200 focus:border-purple-400 rounded-lg text-sm text-right"
+                      placeholder="ערוך את הטקסט כאן..."
+                      dir="rtl"
+                      style={{ textAlign: 'right' }}
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        size="sm"
+                        onClick={saveEdit}
+                        className="bg-green-500 hover:bg-green-600 text-white text-sm h-8"
+                      >
+                        <Save className="w-4 h-4 ml-1" />
+                        שמור
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={cancelEdit}
+                        className="text-sm h-8"
+                      >
+                        <X className="w-4 h-4 ml-1" />
+                        ביטול
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white p-4 rounded-lg border border-gray-200 max-h-64 overflow-y-auto" dir="rtl">
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed text-right" style={{ textAlign: 'right' }}>
+                      {transcription.processed_text || transcription.original_text}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Processing options */}
-              {!transcription.processed_text && (
+              {!transcription.processed_text && editingId !== transcription.id && (
                 <div className="mt-3 pt-3 border-t border-gray-200">
                   <SmartProcessor
                     transcriptionId={transcription.id}
@@ -298,47 +330,16 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
                 </div>
               )}
 
-              {/* Edit mode */}
-              {editingId === transcription.id && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <Textarea
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    className="min-h-32 resize-y border-gray-200 focus:border-purple-400 rounded-lg text-sm"
-                    placeholder="ערוך את הטקסט כאן..."
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <Button
-                      size="sm"
-                      onClick={saveEdit}
-                      className="bg-green-500 hover:bg-green-600 text-white text-sm h-8"
-                    >
-                      <Save className="w-4 h-4 mr-1" />
-                      שמור
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={cancelEdit}
-                      className="text-sm h-8"
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      ביטול
-                    </Button>
-                  </div>
-                </div>
-              )}
-
               {/* Action buttons */}
               {editingId !== transcription.id && (
-                <div className="flex gap-2 mt-3 pt-3 border-t border-gray-200">
+                <div className="flex gap-2 mt-3 pt-3 border-t border-gray-200 justify-end">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => startEdit(transcription)}
-                    className="text-purple-600 border-purple-200 hover:bg-purple-50 flex-1 text-sm h-8"
+                    className="text-purple-600 border-purple-200 hover:bg-purple-50 text-sm h-8"
                   >
-                    <Edit3 className="w-4 h-4 mr-1" />
+                    <Edit3 className="w-4 h-4 ml-1" />
                     ערוך
                   </Button>
                   <Button
