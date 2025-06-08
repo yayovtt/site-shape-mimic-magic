@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -157,6 +156,18 @@ const Tools = () => {
     }
   };
 
+  const getAddButtonText = (toolId: string) => {
+    switch (toolId) {
+      case "tasks": return "הוסף משימה חדשה";
+      case "goals": return "הוסף יעד חדש";
+      case "meetings": return "הוסף פגישה חדשה";
+      case "chat": return "הוסף נושא לשיחה";
+      case "achievements": return "הוסף הישג חדש";
+      case "schedules": return "הוסף אירוע חדש";
+      default: return "הוסף פריט חדש";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50" dir="rtl">
       <div className="container mx-auto px-4 py-8">
@@ -211,14 +222,25 @@ const Tools = () => {
                 
                 <CollapsibleContent>
                   <CardContent className="pt-0">
+                    {/* Add New Item Button - Above Summary */}
+                    <div className="mb-6">
+                      <Button
+                        onClick={() => handleAddGoal(tool.id)}
+                        className={`w-full bg-gradient-to-r ${tool.gradient} hover:opacity-90 text-white flex items-center justify-center gap-2`}
+                      >
+                        <Plus className="w-4 h-4" />
+                        {getAddButtonText(tool.id)}
+                      </Button>
+                    </div>
+
                     {/* Status Summary - Rectangle shaped and larger */}
                     <div className="grid grid-cols-1 gap-4 mb-6">
                       {tool.stats.map((stat, index) => (
-                        <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <div key={index} className="flex justify-between items-center p-6 bg-gray-50 rounded-lg min-h-[70px]">
                           <div className="text-right">
-                            <div className="text-sm text-gray-500">{stat.label}</div>
+                            <div className="text-base text-gray-500">{stat.label}</div>
                           </div>
-                          <div className={`text-xl font-bold ${stat.color || 'text-purple-600'}`}>
+                          <div className={`text-2xl font-bold ${stat.color || 'text-purple-600'}`}>
                             {stat.value}
                           </div>
                         </div>
@@ -241,11 +263,11 @@ const Tools = () => {
                       </div>
                     </div>
 
-                    {/* Add New Goal Section */}
+                    {/* Add New Goal Section with Form */}
                     <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4">
                       <h4 className="text-md font-semibold mb-3 flex items-center gap-2">
                         <Plus className="w-4 h-4 text-green-600" />
-                        הוסף יעד חדש
+                        הוסף יעד או מטרה חדשה
                       </h4>
                       <div className="space-y-3">
                         <Textarea
@@ -260,7 +282,7 @@ const Tools = () => {
                           className={`w-full bg-gradient-to-r ${tool.gradient} hover:opacity-90`}
                         >
                           <Plus className="w-4 h-4 ml-2" />
-                          הוסף יעד
+                          הוסף
                         </Button>
                       </div>
                     </div>
