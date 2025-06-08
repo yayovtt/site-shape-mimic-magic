@@ -8,8 +8,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const OPENAI_API_KEY = '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';
-const CLAUDE_API_KEY = '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';
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+const CLAUDE_API_KEY = Deno.env.get('CLAUDE_API_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,6 +28,10 @@ serve(async (req) => {
     let processedText = '';
     
     if (engine === 'chatgpt') {
+      if (!OPENAI_API_KEY) {
+        throw new Error('OpenAI API key not configured');
+      }
+
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -35,7 +39,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4.1-2025-04-14',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
@@ -52,13 +56,19 @@ serve(async (req) => {
       });
 
       if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
+        const errorData = await response.json();
+        console.error('OpenAI API error:', errorData);
+        throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
       const result = await response.json();
       processedText = result.choices[0]?.message?.content || '';
       
     } else if (engine === 'claude') {
+      if (!CLAUDE_API_KEY) {
+        throw new Error('Claude API key not configured');
+      }
+
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -80,11 +90,15 @@ serve(async (req) => {
       });
 
       if (!response.ok) {
-        throw new Error(`Claude API error: ${response.status}`);
+        const errorData = await response.json();
+        console.error('Claude API error:', errorData);
+        throw new Error(`Claude API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
       const result = await response.json();
       processedText = result.content[0]?.text || '';
+    } else {
+      throw new Error('Invalid engine specified');
     }
 
     return new Response(
