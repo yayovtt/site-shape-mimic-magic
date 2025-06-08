@@ -13,6 +13,7 @@ interface MediaUploaderProps {
 export const MediaUploader = ({ onTranscription }: MediaUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [transcriptedText, setTranscriptedText] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -20,6 +21,7 @@ export const MediaUploader = ({ onTranscription }: MediaUploaderProps) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      setTranscriptedText(""); // Clear previous transcription
       toast({
         title: "קובץ נבחר",
         description: `נבחר: ${file.name}`,
@@ -31,28 +33,35 @@ export const MediaUploader = ({ onTranscription }: MediaUploaderProps) => {
     if (!selectedFile) return;
 
     setIsProcessing(true);
+    setTranscriptedText("");
+    
     try {
+      console.log('Starting file transcription for:', selectedFile.name);
+      
       // Convert file to base64
       const arrayBuffer = await selectedFile.arrayBuffer();
       const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
+      console.log('Calling groq-transcription function...');
+      
       // Call Groq transcription function
       const { data, error } = await supabase.functions.invoke('groq-transcription', {
         body: { audio: base64Audio }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
 
       if (data?.text) {
+        console.log('Transcription successful:', data.text);
+        setTranscriptedText(data.text);
         onTranscription?.(data.text);
         toast({
           title: "תמלול הושלם!",
           description: "הטקסט נוצר בהצלחה",
         });
-        setSelectedFile(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
       } else {
         throw new Error('לא התקבל טקסט מהתמלול');
       }
@@ -71,6 +80,7 @@ export const MediaUploader = ({ onTranscription }: MediaUploaderProps) => {
 
   const clearFile = () => {
     setSelectedFile(null);
+    setTranscriptedText("");
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -154,6 +164,14 @@ export const MediaUploader = ({ onTranscription }: MediaUploaderProps) => {
             >
               בחר קובץ אחר
             </Button>
+          </div>
+        )}
+
+        {/* Display transcribed text */}
+        {transcriptedText && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h4 className="font-medium text-green-800 mb-2">תוצאת התמלול:</h4>
+            <p className="text-green-700 whitespace-pre-wrap">{transcriptedText}</p>
           </div>
         )}
       </CardContent>

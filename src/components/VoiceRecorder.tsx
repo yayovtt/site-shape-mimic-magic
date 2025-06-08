@@ -12,6 +12,7 @@ interface VoiceRecorderProps {
 export const VoiceRecorder = ({ onTranscription }: VoiceRecorderProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [transcriptedText, setTranscriptedText] = useState<string>("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
@@ -26,6 +27,7 @@ export const VoiceRecorder = ({ onTranscription }: VoiceRecorderProps) => {
       
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+      setTranscriptedText(""); // Clear previous transcription
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -69,22 +71,31 @@ export const VoiceRecorder = ({ onTranscription }: VoiceRecorderProps) => {
 
   const transcribeAudio = async (audioBlob: Blob) => {
     try {
+      console.log('Starting voice transcription...');
+      
       // Convert blob to base64
       const arrayBuffer = await audioBlob.arrayBuffer();
       const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+      console.log('Calling groq-transcription function...');
 
       // Call Groq transcription function
       const { data, error } = await supabase.functions.invoke('groq-transcription', {
         body: { audio: base64Audio }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
 
       if (data?.text) {
+        console.log('Voice transcription successful:', data.text);
+        setTranscriptedText(data.text);
         onTranscription(data.text);
         toast({
           title: "תמלול הושלם!",
-          description: "הטקסט נוסף לצ'אט",
+          description: "הטקסט נוסף למערכת",
         });
       } else {
         throw new Error('לא התקבל טקסט מהתמלול');
@@ -103,41 +114,51 @@ export const VoiceRecorder = ({ onTranscription }: VoiceRecorderProps) => {
   };
 
   return (
-    <div className="flex items-center gap-2">
-      {!isRecording && !isProcessing && (
-        <Button
-          onClick={startRecording}
-          size="sm"
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <Mic className="w-4 h-4" />
-          הקלט
-        </Button>
-      )}
-      
-      {isRecording && (
-        <Button
-          onClick={stopRecording}
-          size="sm"
-          variant="destructive"
-          className="flex items-center gap-2 animate-pulse"
-        >
-          <Square className="w-4 h-4" />
-          עצור הקלטה
-        </Button>
-      )}
-      
-      {isProcessing && (
-        <Button
-          disabled
-          size="sm"
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-          מתמלל...
-        </Button>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        {!isRecording && !isProcessing && (
+          <Button
+            onClick={startRecording}
+            size="sm"
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Mic className="w-4 h-4" />
+            הקלט
+          </Button>
+        )}
+        
+        {isRecording && (
+          <Button
+            onClick={stopRecording}
+            size="sm"
+            variant="destructive"
+            className="flex items-center gap-2 animate-pulse"
+          >
+            <Square className="w-4 h-4" />
+            עצור הקלטה
+          </Button>
+        )}
+        
+        {isProcessing && (
+          <Button
+            disabled
+            size="sm"
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+            מתמלל...
+          </Button>
+        )}
+      </div>
+
+      {/* Display transcribed text */}
+      {transcriptedText && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="font-medium text-blue-800 mb-2">תוצאת תמלול קולי:</h4>
+          <p className="text-blue-700 whitespace-pre-wrap">{transcriptedText}</p>
+        </div>
       )}
     </div>
   );
