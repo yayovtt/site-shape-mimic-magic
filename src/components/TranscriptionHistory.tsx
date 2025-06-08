@@ -208,25 +208,25 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
           <p className="text-gray-400 text-sm">השתמש בהקלטה או העלה קובץ כדי להתחיל</p>
         </div>
       ) : (
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div className="space-y-4 max-h-96 overflow-y-auto">
           {transcriptions.map((transcription) => (
-            <div key={transcription.id} className="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:shadow-md transition-shadow">
+            <div key={transcription.id} className="bg-gray-50 rounded-lg p-4 border border-gray-100 hover:shadow-md transition-shadow">
               {/* Header with badges and actions */}
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-1 flex-wrap">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge 
                     variant={transcription.metadata?.source === 'voice' ? 'default' : 'secondary'} 
-                    className="rounded-md bg-purple-100 text-purple-800 text-xs"
+                    className="rounded-md bg-purple-100 text-purple-800 text-sm"
                   >
                     {transcription.metadata?.source === 'voice' ? (
-                      <><Mic className="w-2 h-2 mr-1" /> הקלטה</>
+                      <><Mic className="w-3 h-3 mr-1" /> הקלטה</>
                     ) : (
-                      <><Upload className="w-2 h-2 mr-1" /> קובץ</>
+                      <><Upload className="w-3 h-3 mr-1" /> קובץ</>
                     )}
                   </Badge>
                   {transcription.processing_engine && (
-                    <Badge variant="outline" className="text-xs rounded-md bg-green-100 text-green-800">
-                      <Sparkles className="w-2 h-2 mr-1" />
+                    <Badge variant="outline" className="text-sm rounded-md bg-green-100 text-green-800">
+                      <Sparkles className="w-3 h-3 mr-1" />
                       {transcription.processing_engine === 'chatgpt' ? 'GPT' : 'Claude'}
                     </Badge>
                   )}
@@ -237,17 +237,9 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
                     size="sm"
                     variant="ghost"
                     onClick={() => copyToClipboard(transcription.processed_text || transcription.original_text)}
-                    className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 p-1 h-6 w-6"
+                    className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 p-2 h-8 w-8"
                   >
-                    <Copy className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {/* Share functionality */}}
-                    className="text-green-600 hover:text-green-700 hover:bg-green-50 p-1 h-6 w-6"
-                  >
-                    <Share className="w-3 h-3" />
+                    <Copy className="w-4 h-4" />
                   </Button>
                   <Button
                     size="sm"
@@ -256,44 +248,48 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
                       transcription.processed_text || transcription.original_text, 
                       `תמלול_${new Date(transcription.created_at).toLocaleDateString('he-IL')}.txt`
                     )}
-                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 p-1 h-6 w-6"
+                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 p-2 h-8 w-8"
                   >
-                    <Download className="w-3 h-3" />
+                    <Download className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
 
               {/* File info */}
-              <div className="mb-2 space-y-1">
-                {transcription.filename && (
-                  <p className="text-xs font-medium text-gray-700 truncate" title={transcription.filename}>
-                    {transcription.filename}
-                  </p>
-                )}
-                <div className="flex items-center gap-3 text-xs text-gray-500">
-                  {transcription.file_size_mb && (
-                    <span className="flex items-center gap-1">
-                      <FileText className="w-2 h-2" />
-                      {transcription.file_size_mb.toFixed(1)} MB
-                    </span>
+              {(transcription.filename || transcription.file_size_mb) && (
+                <div className="mb-3 space-y-1">
+                  {transcription.filename && (
+                    <p className="text-sm font-medium text-gray-700 truncate" title={transcription.filename}>
+                      📁 {transcription.filename}
+                    </p>
                   )}
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-2 h-2" />
-                    {new Date(transcription.created_at).toLocaleDateString('he-IL')}
-                  </span>
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                    {transcription.file_size_mb && (
+                      <span className="flex items-center gap-1">
+                        <FileText className="w-3 h-3" />
+                        {transcription.file_size_mb.toFixed(1)} MB
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {new Date(transcription.created_at).toLocaleDateString('he-IL')} {new Date(transcription.created_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Text preview */}
-              <div className="mb-2">
-                <p className="text-xs text-gray-700 line-clamp-2">
-                  {transcription.processed_text || transcription.original_text}
-                </p>
+              {/* Full text display */}
+              <div className="mb-3">
+                <div className="bg-white p-4 rounded-lg border border-gray-200 max-h-64 overflow-y-auto">
+                  <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                    {transcription.processed_text || transcription.original_text}
+                  </p>
+                </div>
               </div>
 
               {/* Processing options */}
               {!transcription.processed_text && (
-                <div className="mt-2 pt-2 border-t border-gray-200">
+                <div className="mt-3 pt-3 border-t border-gray-200">
                   <SmartProcessor
                     transcriptionId={transcription.id}
                     originalText={transcription.original_text}
@@ -304,29 +300,29 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
 
               {/* Edit mode */}
               {editingId === transcription.id && (
-                <div className="mt-2 pt-2 border-t border-gray-200">
+                <div className="mt-3 pt-3 border-t border-gray-200">
                   <Textarea
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
-                    className="min-h-20 resize-y border-gray-200 focus:border-purple-400 rounded-lg text-xs"
+                    className="min-h-32 resize-y border-gray-200 focus:border-purple-400 rounded-lg text-sm"
                     placeholder="ערוך את הטקסט כאן..."
                   />
-                  <div className="flex gap-1 mt-2">
+                  <div className="flex gap-2 mt-3">
                     <Button
                       size="sm"
                       onClick={saveEdit}
-                      className="bg-green-500 hover:bg-green-600 text-white text-xs h-7"
+                      className="bg-green-500 hover:bg-green-600 text-white text-sm h-8"
                     >
-                      <Save className="w-3 h-3 mr-1" />
+                      <Save className="w-4 h-4 mr-1" />
                       שמור
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={cancelEdit}
-                      className="text-xs h-7"
+                      className="text-sm h-8"
                     >
-                      <X className="w-3 h-3 mr-1" />
+                      <X className="w-4 h-4 mr-1" />
                       ביטול
                     </Button>
                   </div>
@@ -335,23 +331,23 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
 
               {/* Action buttons */}
               {editingId !== transcription.id && (
-                <div className="flex gap-1 mt-2 pt-2 border-t border-gray-200">
+                <div className="flex gap-2 mt-3 pt-3 border-t border-gray-200">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => startEdit(transcription)}
-                    className="text-purple-600 border-purple-200 hover:bg-purple-50 flex-1 text-xs h-7"
+                    className="text-purple-600 border-purple-200 hover:bg-purple-50 flex-1 text-sm h-8"
                   >
-                    <Edit3 className="w-3 h-3 mr-1" />
+                    <Edit3 className="w-4 h-4 mr-1" />
                     ערוך
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => deleteTranscription(transcription.id)}
-                    className="text-red-600 border-red-200 hover:bg-red-50 text-xs h-7"
+                    className="text-red-600 border-red-200 hover:bg-red-50 text-sm h-8"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-4 h-4" />
                   </Button>
                 </div>
               )}
