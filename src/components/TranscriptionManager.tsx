@@ -145,7 +145,7 @@ export const TranscriptionManager = () => {
 
         <TabsContent value="transcription" className="space-y-6">
           {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[calc(100vh-300px)]">
             {/* Left Side - Action Cards */}
             <div className="lg:col-span-2 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -155,7 +155,7 @@ export const TranscriptionManager = () => {
             </div>
 
             {/* Right Side - History Panel */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 min-h-full">
               <TranscriptionHistory 
                 transcriptions={transcriptions}
                 onTranscriptionUpdate={setTranscriptions}

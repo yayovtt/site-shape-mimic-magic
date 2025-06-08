@@ -1,7 +1,9 @@
 
 import { useState } from "react";
-import { FileText } from "lucide-react";
+import { FileText, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { TranscriptionItem } from "./TranscriptionItem";
+import { useNavigate } from "react-router-dom";
 
 interface TranscriptionItem {
   id: string;
@@ -26,6 +28,7 @@ interface TranscriptionHistoryProps {
 
 export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: TranscriptionHistoryProps) => {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const navigate = useNavigate();
 
   const toggleExpand = (id: string) => {
     const newExpanded = new Set(expandedItems);
@@ -49,13 +52,30 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
     onTranscriptionUpdate(updatedTranscriptions);
   };
 
+  const openComparisonPage = () => {
+    navigate('/transcription-comparison');
+  };
+
   return (
-    <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 h-full min-w-96 w-full" dir="rtl">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="bg-gradient-to-r from-purple-500 to-green-400 rounded-lg p-2">
-          <FileText className="w-5 h-5 text-white" />
+    <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 h-full min-w-96 w-full flex flex-col" dir="rtl">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="bg-gradient-to-r from-purple-500 to-green-400 rounded-lg p-2">
+            <FileText className="w-5 h-5 text-white" />
+          </div>
+          <h2 className="text-lg font-bold text-gray-800">היסטוריית תמלולים ({transcriptions.length})</h2>
         </div>
-        <h2 className="text-lg font-bold text-gray-800">היסטוריית תמלולים ({transcriptions.length})</h2>
+        
+        {transcriptions.length > 0 && (
+          <Button
+            size="sm"
+            onClick={openComparisonPage}
+            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+            title="פתח עמוד השוואה"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )}
       </div>
       
       {transcriptions.length === 0 ? (
@@ -67,7 +87,7 @@ export const TranscriptionHistory = ({ transcriptions, onTranscriptionUpdate }: 
           <p className="text-gray-400 text-sm">השתמש בהקלטה או העלה קובץ כדי להתחיל</p>
         </div>
       ) : (
-        <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="space-y-4 flex-1 overflow-y-auto">
           {transcriptions.map((transcription) => (
             <TranscriptionItem
               key={transcription.id}

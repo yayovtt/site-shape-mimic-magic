@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +15,7 @@ import Achievements from "./pages/Achievements";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Tools from "./pages/Tools";
+import TranscriptionComparison from "./pages/TranscriptionComparison";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +44,7 @@ const App = () => {
               <Route path="/meetings" element={<Meetings />} />
               <Route path="/schedules" element={<Schedules />} />
               <Route path="/achievements" element={<Achievements />} />
+              <Route path="/transcription-comparison" element={<TranscriptionComparison />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
