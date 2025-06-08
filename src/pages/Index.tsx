@@ -1,11 +1,12 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckSquare, Target, Calendar, MessageSquare, Trophy, Clock, LogOut, Mic } from "lucide-react";
+import { CheckSquare, Target, Calendar, MessageSquare, Trophy, Clock, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
+import { MediaUploader } from "@/components/MediaUploader";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -113,10 +114,7 @@ const Index = () => {
         {/* Voice Recorder Section */}
         <Card className="mb-8" dir="rtl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mic className="w-5 h-5" />
-              תמלול קול מהיר
-            </CardTitle>
+            <CardTitle>תמלול קול מהיר</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
@@ -126,41 +124,10 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* File Upload Section */}
-        <Card className="mb-8" dir="rtl">
-          <CardHeader>
-            <CardTitle>העלאת קבצי אודיו ווידאו</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <input
-                type="file"
-                accept="audio/*,video/*"
-                className="hidden"
-                id="media-upload"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    toast({
-                      title: "קובץ נבחר",
-                      description: `נבחר: ${file.name}`,
-                    });
-                  }
-                }}
-              />
-              <label
-                htmlFor="media-upload"
-                className="cursor-pointer flex flex-col items-center gap-2"
-              >
-                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                  <Mic className="w-6 h-6 text-gray-500" />
-                </div>
-                <p className="text-gray-600">לחץ כאן להעלאת קבצי אודיו או וידאו</p>
-                <p className="text-sm text-gray-400">תומך ב-MP3, WAV, MP4 ועוד</p>
-              </label>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Media Upload Section */}
+        <div className="mb-8">
+          <MediaUploader onTranscription={handleVoiceTranscription} />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => (
