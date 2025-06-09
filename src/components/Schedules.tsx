@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-interface Schedule {
+// Use a simple type that matches what we need without conflicting with Supabase types
+type ScheduleItem = {
   id: string;
   title: string;
   description: string | null;
@@ -20,7 +20,7 @@ interface Schedule {
   priority: number | null;
   created_at: string | null;
   updated_at: string | null;
-}
+};
 
 const categories = [
   { value: "work", label: "עבודה" },
@@ -39,7 +39,7 @@ const priorities = [
 
 export const Schedules = () => {
   const { user } = useAuth();
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [newSchedule, setNewSchedule] = useState({ 
     title: "", 
     description: "", 
@@ -90,18 +90,7 @@ export const Schedules = () => {
       }
       
       console.log('Schedules fetched successfully:', data);
-      const typedData: Schedule[] = data?.map(item => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        start_time: item.start_time,
-        end_time: item.end_time,
-        category: item.category,
-        priority: item.priority,
-        created_at: item.created_at,
-        updated_at: item.updated_at
-      })) || [];
-      setSchedules(typedData);
+      setSchedules(data || []);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
       toast({
@@ -204,7 +193,7 @@ export const Schedules = () => {
     }
   };
 
-  const startEdit = (schedule: Schedule) => {
+  const startEdit = (schedule: ScheduleItem) => {
     setEditingSchedule(schedule.id);
     setEditData({ 
       title: schedule.title, 
@@ -279,7 +268,7 @@ export const Schedules = () => {
     });
   };
 
-  const shareSchedule = (schedule: Schedule) => {
+  const shareSchedule = (schedule: ScheduleItem) => {
     const startTime = new Date(schedule.start_time);
     const endTime = new Date(schedule.end_time);
     const categoryLabel = categories.find(c => c.value === schedule.category)?.label || schedule.category;
