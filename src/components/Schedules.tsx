@@ -24,9 +24,21 @@ const priorities = [
   { value: 3, label: "גבוהה", color: "text-red-600" }
 ];
 
+interface Schedule {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  category: string | null;
+  priority: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export const Schedules = () => {
   const { user } = useAuth();
-  const [schedules, setSchedules] = useState<any[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [newSchedule, setNewSchedule] = useState({ 
     title: "", 
     description: "", 
@@ -77,7 +89,17 @@ export const Schedules = () => {
       }
       
       console.log('Schedules fetched successfully:', data);
-      const schedulesData = data ? [...data] : [];
+      const schedulesData: Schedule[] = data?.map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        start_time: item.start_time,
+        end_time: item.end_time,
+        category: item.category,
+        priority: item.priority,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      })) || [];
       setSchedules(schedulesData);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
@@ -181,7 +203,7 @@ export const Schedules = () => {
     }
   };
 
-  const startEdit = (schedule: any) => {
+  const startEdit = (schedule: Schedule) => {
     setEditingSchedule(schedule.id);
     setEditData({ 
       title: schedule.title, 
@@ -256,7 +278,7 @@ export const Schedules = () => {
     });
   };
 
-  const shareSchedule = (schedule: any) => {
+  const shareSchedule = (schedule: Schedule) => {
     const startTime = new Date(schedule.start_time);
     const endTime = new Date(schedule.end_time);
     const categoryLabel = categories.find(c => c.value === schedule.category)?.label || schedule.category;
