@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Plus, Trash2, Edit, Check, X, Clock, Share2, AlertCircle } from "lucide
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import type { Database } from "@/integrations/supabase/types";
 
 const categories = [
   { value: "work", label: "עבודה" },
@@ -24,6 +26,8 @@ const priorities = [
   { value: 3, label: "גבוהה", color: "text-red-600" }
 ];
 
+type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
+
 interface Schedule {
   id: string;
   title: string;
@@ -34,6 +38,7 @@ interface Schedule {
   priority: number | null;
   created_at?: string | null;
   updated_at?: string | null;
+  user_id?: string | null;
 }
 
 export const Schedules = () => {
@@ -89,7 +94,9 @@ export const Schedules = () => {
       }
       
       console.log('Schedules fetched successfully:', data);
-      const schedulesData: Schedule[] = data?.map(item => ({
+      
+      // Convert the Supabase data to our Schedule interface
+      const schedulesData: Schedule[] = (data || []).map((item: ScheduleRow) => ({
         id: item.id,
         title: item.title,
         description: item.description,
@@ -98,8 +105,10 @@ export const Schedules = () => {
         category: item.category,
         priority: item.priority,
         created_at: item.created_at,
-        updated_at: item.updated_at
-      })) || [];
+        updated_at: item.updated_at,
+        user_id: item.user_id
+      }));
+      
       setSchedules(schedulesData);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
