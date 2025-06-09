@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { Plus, Trash2, Edit, Check, X, Clock, Share2, AlertCircle } from "lucide
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Database } from "@/integrations/supabase/types";
 
 const categories = [
   { value: "work", label: "עבודה" },
@@ -26,8 +24,6 @@ const priorities = [
   { value: 3, label: "גבוהה", color: "text-red-600" }
 ];
 
-type ScheduleRow = Database['public']['Tables']['schedules']['Row'];
-
 interface Schedule {
   id: string;
   title: string;
@@ -38,7 +34,6 @@ interface Schedule {
   priority: number | null;
   created_at?: string | null;
   updated_at?: string | null;
-  user_id?: string | null;
 }
 
 export const Schedules = () => {
@@ -68,24 +63,16 @@ export const Schedules = () => {
   console.log('Schedules - Schedules:', schedules);
 
   useEffect(() => {
-    if (user) {
-      fetchSchedules();
-    }
-  }, [user]);
+    fetchSchedules();
+  }, []);
 
   const fetchSchedules = async () => {
-    if (!user) {
-      console.log('No user found, skipping fetch schedules');
-      return;
-    }
-
     setIsLoading(true);
     try {
-      console.log('Fetching schedules for user:', user.id);
+      console.log('Fetching schedules...');
       const { data, error } = await supabase
         .from("schedules")
         .select("*")
-        .eq('user_id', user.id)
         .order("start_time", { ascending: true });
 
       if (error) {
@@ -95,8 +82,8 @@ export const Schedules = () => {
       
       console.log('Schedules fetched successfully:', data);
       
-      // Convert the Supabase data to our Schedule interface
-      const schedulesData: Schedule[] = (data || []).map((item: ScheduleRow) => ({
+      // Convert the data to our Schedule interface
+      const schedulesData: Schedule[] = (data || []).map(item => ({
         id: item.id,
         title: item.title,
         description: item.description,
@@ -105,8 +92,7 @@ export const Schedules = () => {
         category: item.category,
         priority: item.priority,
         created_at: item.created_at,
-        updated_at: item.updated_at,
-        user_id: item.user_id
+        updated_at: item.updated_at
       }));
       
       setSchedules(schedulesData);
@@ -126,14 +112,6 @@ export const Schedules = () => {
     e.preventDefault();
     if (!newSchedule.title.trim() || !newSchedule.start_time || !newSchedule.end_time) return;
 
-    if (!user) {
-      toast({
-        title: "שגיאה: משתמש לא מחובר",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (new Date(newSchedule.end_time) <= new Date(newSchedule.start_time)) {
       toast({
         title: "שגיאה",
@@ -144,7 +122,7 @@ export const Schedules = () => {
     }
 
     try {
-      console.log('Creating schedule:', { ...newSchedule, user_id: user.id });
+      console.log('Creating schedule:', newSchedule);
       
       const { data, error } = await supabase
         .from("schedules")
@@ -154,8 +132,7 @@ export const Schedules = () => {
           start_time: newSchedule.start_time,
           end_time: newSchedule.end_time,
           category: newSchedule.category,
-          priority: newSchedule.priority,
-          user_id: user.id
+          priority: newSchedule.priority
         })
         .select()
         .single();
@@ -311,14 +288,6 @@ export const Schedules = () => {
     }
     return `${diffMinutes} דקות`;
   };
-
-  if (!user) {
-    return (
-      <div className="text-center text-gray-500 py-8 text-lg" dir="rtl">
-        יש להתחבר כדי לנהל אירועים
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
