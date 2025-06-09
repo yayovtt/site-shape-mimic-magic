@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,18 +8,9 @@ import { Plus, Trash2, Edit, Check, X, Clock, Share2, AlertCircle } from "lucide
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import type { Database } from "@/integrations/supabase/types";
 
-interface Schedule {
-  id: string;
-  title: string;
-  description: string | null;
-  start_time: string;
-  end_time: string;
-  category: string | null;
-  priority: number | null;
-  created_at: string | null;
-  updated_at: string | null;
-}
+type Schedule = Database['public']['Tables']['schedules']['Row'];
 
 const categories = [
   { value: "work", label: "עבודה" },
@@ -90,7 +80,7 @@ export const Schedules = () => {
       }
       
       console.log('Schedules fetched successfully:', data);
-      setSchedules(data as Schedule[]);
+      setSchedules(data || []);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
       toast({
