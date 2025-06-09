@@ -39,7 +39,7 @@ const priorities = [
 
 export const Schedules = () => {
   const { user } = useAuth();
-  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+  const [schedules, setSchedules] = useState<any[]>([]);
   const [newSchedule, setNewSchedule] = useState({ 
     title: "", 
     description: "", 
@@ -90,7 +90,7 @@ export const Schedules = () => {
       }
       
       console.log('Schedules fetched successfully:', data);
-      setSchedules(data || []);
+      setSchedules(data as any[] || []);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
       toast({
@@ -193,7 +193,7 @@ export const Schedules = () => {
     }
   };
 
-  const startEdit = (schedule: ScheduleItem) => {
+  const startEdit = (schedule: any) => {
     setEditingSchedule(schedule.id);
     setEditData({ 
       title: schedule.title, 
@@ -268,7 +268,7 @@ export const Schedules = () => {
     });
   };
 
-  const shareSchedule = (schedule: ScheduleItem) => {
+  const shareSchedule = (schedule: any) => {
     const startTime = new Date(schedule.start_time);
     const endTime = new Date(schedule.end_time);
     const categoryLabel = categories.find(c => c.value === schedule.category)?.label || schedule.category;
