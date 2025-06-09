@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,13 +13,13 @@ import { useAuth } from "@/contexts/AuthContext";
 interface Schedule {
   id: string;
   title: string;
-  description?: string | null;
+  description: string | null;
   start_time: string;
   end_time: string;
-  category?: string | null;
-  priority?: number | null;
-  created_at?: string | null;
-  updated_at?: string | null;
+  category: string | null;
+  priority: number | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 const categories = [
@@ -89,7 +90,7 @@ export const Schedules = () => {
       }
       
       console.log('Schedules fetched successfully:', data);
-      setSchedules(data || []);
+      setSchedules(data as Schedule[]);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
       toast({
