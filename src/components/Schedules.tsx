@@ -12,14 +12,13 @@ import { useAuth } from "@/contexts/AuthContext";
 interface Schedule {
   id: string;
   title: string;
-  description?: string;
+  description?: string | null;
   start_time: string;
   end_time: string;
-  category: string;
-  priority: number;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
+  category?: string | null;
+  priority?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 const categories = [
@@ -200,8 +199,8 @@ export const Schedules = () => {
       description: schedule.description || "", 
       start_time: schedule.start_time.slice(0, 16),
       end_time: schedule.end_time.slice(0, 16),
-      category: schedule.category,
-      priority: schedule.priority
+      category: schedule.category || "general",
+      priority: schedule.priority || 1
     });
   };
 
