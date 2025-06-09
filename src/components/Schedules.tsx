@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Edit, Check, X, Clock, Share2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 const categories = [
   { value: "work", label: "עבודה" },
@@ -37,7 +36,6 @@ interface Schedule {
 }
 
 export const Schedules = () => {
-  const { user } = useAuth();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [newSchedule, setNewSchedule] = useState({ 
     title: "", 
@@ -59,8 +57,8 @@ export const Schedules = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  console.log('Schedules - Current user:', user);
-  console.log('Schedules - Schedules:', schedules);
+  console.log('Schedules component rendered');
+  console.log('Current schedules:', schedules);
 
   useEffect(() => {
     fetchSchedules();
@@ -69,7 +67,7 @@ export const Schedules = () => {
   const fetchSchedules = async () => {
     setIsLoading(true);
     try {
-      console.log('Fetching schedules...');
+      console.log('Fetching schedules from database...');
       const { data, error } = await supabase
         .from("schedules")
         .select("*")
@@ -80,10 +78,10 @@ export const Schedules = () => {
         throw error;
       }
       
-      console.log('Schedules fetched successfully:', data);
+      console.log('Raw data from database:', data);
       
-      // Convert the data to our Schedule interface
-      const schedulesData: Schedule[] = (data || []).map(item => ({
+      // Simple mapping without complex type casting
+      const mappedSchedules = data ? data.map(item => ({
         id: item.id,
         title: item.title,
         description: item.description,
@@ -93,14 +91,15 @@ export const Schedules = () => {
         priority: item.priority,
         created_at: item.created_at,
         updated_at: item.updated_at
-      }));
+      })) : [];
       
-      setSchedules(schedulesData);
+      console.log('Mapped schedules:', mappedSchedules);
+      setSchedules(mappedSchedules);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
       toast({
         title: "שגיאה בטעינת לוח הזמנים",
-        description: error.message,
+        description: error.message || "שגיאה לא ידועה",
         variant: "destructive",
       });
     } finally {
@@ -110,7 +109,26 @@ export const Schedules = () => {
 
   const addSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSchedule.title.trim() || !newSchedule.start_time || !newSchedule.end_time) return;
+    
+    console.log('Adding new schedule:', newSchedule);
+    
+    if (!newSchedule.title.trim()) {
+      toast({
+        title: "שגיאה",
+        description: "נא להזין כותרת לאירוע",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newSchedule.start_time || !newSchedule.end_time) {
+      toast({
+        title: "שגיאה",
+        description: "נא להזין זמן התחלה וסיום",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (new Date(newSchedule.end_time) <= new Date(newSchedule.start_time)) {
       toast({
@@ -122,18 +140,20 @@ export const Schedules = () => {
     }
 
     try {
-      console.log('Creating schedule:', newSchedule);
+      const scheduleData = {
+        title: newSchedule.title,
+        description: newSchedule.description || null,
+        start_time: newSchedule.start_time,
+        end_time: newSchedule.end_time,
+        category: newSchedule.category,
+        priority: newSchedule.priority
+      };
+      
+      console.log('Inserting schedule data:', scheduleData);
       
       const { data, error } = await supabase
         .from("schedules")
-        .insert({
-          title: newSchedule.title,
-          description: newSchedule.description || null,
-          start_time: newSchedule.start_time,
-          end_time: newSchedule.end_time,
-          category: newSchedule.category,
-          priority: newSchedule.priority
-        })
+        .insert(scheduleData)
         .select()
         .single();
 
@@ -143,6 +163,8 @@ export const Schedules = () => {
       }
 
       console.log('Schedule created successfully:', data);
+      
+      // Reset form
       setNewSchedule({ 
         title: "", 
         description: "", 
@@ -151,6 +173,8 @@ export const Schedules = () => {
         category: "general",
         priority: 1
       });
+      
+      // Refresh schedules
       await fetchSchedules();
       
       toast({
@@ -160,7 +184,7 @@ export const Schedules = () => {
       console.error("Error creating schedule:", error);
       toast({
         title: "שגיאה ביצירת האירוע",
-        description: error.message,
+        description: error.message || "שגיאה לא ידועה",
         variant: "destructive",
       });
     }
@@ -168,13 +192,15 @@ export const Schedules = () => {
 
   const deleteSchedule = async (id: string) => {
     try {
+      console.log('Deleting schedule:', id);
       const { error } = await supabase
         .from("schedules")
         .delete()
         .eq("id", id);
 
       if (error) throw error;
-      fetchSchedules();
+      
+      await fetchSchedules();
       
       toast({
         title: "האירוע נמחק בהצלחה",
@@ -237,7 +263,8 @@ export const Schedules = () => {
         category: "general",
         priority: 1
       });
-      fetchSchedules();
+      
+      await fetchSchedules();
       
       toast({
         title: "האירוע עודכן בהצלחה",
