@@ -20,6 +20,9 @@ export const useTasksWithAuth = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  console.log('useTasksWithAuth - Current user:', user);
+  console.log('useTasksWithAuth - Tasks:', tasks);
+
   const fetchTasks = async () => {
     if (!user) {
       console.log('No user found, skipping fetch tasks');
@@ -43,7 +46,7 @@ export const useTasksWithAuth = () => {
       
       console.log('Tasks fetched successfully:', tasksData);
       setTasks(tasksData || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching tasks:", error);
       toast({
         title: "שגיאה בטעינת משימות",
@@ -56,7 +59,12 @@ export const useTasksWithAuth = () => {
   };
 
   useEffect(() => {
-    fetchTasks();
+    if (user) {
+      fetchTasks();
+    } else {
+      setTasks([]);
+      setIsLoading(false);
+    }
   }, [user]);
 
   const createTask = {
@@ -94,7 +102,7 @@ export const useTasksWithAuth = () => {
         toast({
           title: "המשימה נוצרה בהצלחה",
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error creating task:", error);
         toast({
           title: "שגיאה ביצירת משימה",
@@ -131,7 +139,7 @@ export const useTasksWithAuth = () => {
 
         console.log('Task updated successfully');
         await fetchTasks();
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error updating task:", error);
         toast({
           title: "שגיאה בעדכון משימה",
@@ -172,7 +180,7 @@ export const useTasksWithAuth = () => {
         toast({
           title: "המשימה נמחקה בהצלחה",
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error deleting task:", error);
         toast({
           title: "שגיאה במחיקת משימה",

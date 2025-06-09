@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Edit, Check, X, Clock, Share2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Schedule {
   id: string;
@@ -19,6 +19,7 @@ interface Schedule {
   priority: number;
   created_at: string;
   updated_at: string;
+  user_id: string;
 }
 
 const categories = [
@@ -37,6 +38,7 @@ const priorities = [
 ];
 
 export const Schedules = () => {
+  const { user } = useAuth();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [newSchedule, setNewSchedule] = useState({ 
     title: "", 
@@ -58,19 +60,36 @@ export const Schedules = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  console.log('Schedules - Current user:', user);
+  console.log('Schedules - Schedules:', schedules);
+
   useEffect(() => {
-    fetchSchedules();
-  }, []);
+    if (user) {
+      fetchSchedules();
+    }
+  }, [user]);
 
   const fetchSchedules = async () => {
+    if (!user) {
+      console.log('No user found, skipping fetch schedules');
+      return;
+    }
+
     setIsLoading(true);
     try {
+      console.log('Fetching schedules for user:', user.id);
       const { data, error } = await supabase
         .from("schedules")
         .select("*")
+        .eq('user_id', user.id)
         .order("start_time", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching schedules:', error);
+        throw error;
+      }
+      
+      console.log('Schedules fetched successfully:', data);
       setSchedules(data || []);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
@@ -88,6 +107,14 @@ export const Schedules = () => {
     e.preventDefault();
     if (!newSchedule.title.trim() || !newSchedule.start_time || !newSchedule.end_time) return;
 
+    if (!user) {
+      toast({
+        title: "שגיאה: משתמש לא מחובר",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (new Date(newSchedule.end_time) <= new Date(newSchedule.start_time)) {
       toast({
         title: "שגיאה",
@@ -98,7 +125,9 @@ export const Schedules = () => {
     }
 
     try {
-      const { error } = await supabase
+      console.log('Creating schedule:', { ...newSchedule, user_id: user.id });
+      
+      const { data, error } = await supabase
         .from("schedules")
         .insert({
           title: newSchedule.title,
@@ -107,10 +136,17 @@ export const Schedules = () => {
           end_time: newSchedule.end_time,
           category: newSchedule.category,
           priority: newSchedule.priority,
-        });
+          user_id: user.id
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating schedule:', error);
+        throw error;
+      }
 
+      console.log('Schedule created successfully:', data);
       setNewSchedule({ 
         title: "", 
         description: "", 
@@ -119,7 +155,7 @@ export const Schedules = () => {
         category: "general",
         priority: 1
       });
-      fetchSchedules();
+      await fetchSchedules();
       
       toast({
         title: "האירוע נוצר בהצלחה",
@@ -256,6 +292,14 @@ export const Schedules = () => {
     }
     return `${diffMinutes} דקות`;
   };
+
+  if (!user) {
+    return (
+      <div className="text-center text-gray-500 py-8 text-lg" dir="rtl">
+        יש להתחבר כדי לנהל אירועים
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
