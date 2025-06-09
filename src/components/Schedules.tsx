@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,7 +90,18 @@ export const Schedules = () => {
       }
       
       console.log('Schedules fetched successfully:', data);
-      setSchedules(data || []);
+      const typedData: Schedule[] = data?.map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        start_time: item.start_time,
+        end_time: item.end_time,
+        category: item.category,
+        priority: item.priority,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      })) || [];
+      setSchedules(typedData);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
       toast({
