@@ -1,5 +1,5 @@
 
-import { TaskManager } from "@/components/TaskManager";
+import { TaskManagerFixed } from "@/components/TaskManagerFixed";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +11,9 @@ const Tasks = () => {
   const { user, loading } = useAuth();
 
   useEffect(() => {
+    console.log('Tasks page - User:', user, 'Loading:', loading);
     if (!loading && !user) {
+      console.log('No user found, redirecting to auth');
       navigate("/auth");
     }
   }, [user, loading, navigate]);
@@ -41,7 +43,7 @@ const Tasks = () => {
             חזור לדף הבית
           </Button>
         </div>
-        <TaskManager />
+        <TaskManagerFixed />
       </div>
     </div>
   );
