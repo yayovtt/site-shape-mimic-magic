@@ -9,19 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Use a simple type that matches what we need without conflicting with Supabase types
-type ScheduleItem = {
-  id: string;
-  title: string;
-  description: string | null;
-  start_time: string;
-  end_time: string;
-  category: string | null;
-  priority: number | null;
-  created_at: string | null;
-  updated_at: string | null;
-};
-
 const categories = [
   { value: "work", label: "עבודה" },
   { value: "personal", label: "אישי" },
@@ -90,7 +77,7 @@ export const Schedules = () => {
       }
       
       console.log('Schedules fetched successfully:', data);
-      setSchedules(data as any[] || []);
+      setSchedules(data || []);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
       toast({
