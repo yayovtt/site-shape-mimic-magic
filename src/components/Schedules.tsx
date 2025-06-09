@@ -8,9 +8,19 @@ import { Plus, Trash2, Edit, Check, X, Clock, Share2, AlertCircle } from "lucide
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Database } from "@/integrations/supabase/types";
 
-type Schedule = Database['public']['Tables']['schedules']['Row'];
+type Schedule = {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  category: string | null;
+  priority: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+  user_id?: string;
+};
 
 const categories = [
   { value: "work", label: "עבודה" },
@@ -80,7 +90,7 @@ export const Schedules = () => {
       }
       
       console.log('Schedules fetched successfully:', data);
-      setSchedules(data || []);
+      setSchedules((data as Schedule[]) || []);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
       toast({
