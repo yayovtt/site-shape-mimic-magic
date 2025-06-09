@@ -19,7 +19,6 @@ type Schedule = {
   priority: number | null;
   created_at: string | null;
   updated_at: string | null;
-  user_id?: string;
 };
 
 const categories = [
@@ -90,7 +89,7 @@ export const Schedules = () => {
       }
       
       console.log('Schedules fetched successfully:', data);
-      setSchedules((data as Schedule[]) || []);
+      setSchedules(data || []);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
       toast({
