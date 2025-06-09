@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Schedule = {
+interface Schedule {
   id: string;
   title: string;
   description: string | null;
@@ -19,7 +19,7 @@ type Schedule = {
   priority: number | null;
   created_at: string | null;
   updated_at: string | null;
-};
+}
 
 const categories = [
   { value: "work", label: "עבודה" },
