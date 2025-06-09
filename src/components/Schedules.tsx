@@ -77,7 +77,8 @@ export const Schedules = () => {
       }
       
       console.log('Schedules fetched successfully:', data);
-      setSchedules(data || []);
+      const schedulesData = data ? [...data] : [];
+      setSchedules(schedulesData);
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
       toast({
